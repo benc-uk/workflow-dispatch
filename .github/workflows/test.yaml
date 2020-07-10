@@ -5,12 +5,13 @@ on:
 
 jobs:
   test:
+    runs-on: ubuntu-latest
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v2
+    - name: Check out repository
+      uses: actions/checkout@v2
 
-      - name: Use local my-action
-        uses: ./
-          with:
-            ref: fooooooo 
-            workflow-id: "534267"
+    - name: Use local my-action
+      uses: ./
+      with:
+        ref: fooooooo 
+        workflow-id: "534267"
