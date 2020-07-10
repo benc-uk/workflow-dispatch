@@ -1,0 +1,20 @@
+{
+  "name": "workflow-dispatch",
+  "version": "1.0.0",
+  "description": "Trigger another GitHub Actions workflow",
+  "main": "index.js",
+  "scripts": {
+    "build": "ncc build index.js"
+  },
+  "keywords": [
+    "github",
+    "actions"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@actions/core": "^1.2.4",
+    "@actions/github": "^4.0.0",
+    "@zeit/ncc": "^0.22.3"
+  }
+}

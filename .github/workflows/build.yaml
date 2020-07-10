@@ -1,0 +1,10 @@
+name: Build
+
+on:
+  push:
+
+jobs:
+  build:
+    run: |
+      npm install
+      npm run build
