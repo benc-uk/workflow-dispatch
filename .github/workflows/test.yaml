@@ -10,8 +10,8 @@ jobs:
     - name: Check out repository
       uses: actions/checkout@v2
 
-    - name: Use local my-action
+    - name: Invoke the workflow-dispatch action
       uses: ./
       with:
-        ref: fooooooo 
+        ref: master 
         workflow-id: "534267"
