@@ -1,5 +1,5 @@
 name: 'Workflow Dispatch'
-description: 'Trigger another GitHub Actions workflow'
+description: 'Trigger and chain GitHub Actions workflows with workflow_dispatch events'
 
 inputs:
   workflow: 
@@ -21,3 +21,7 @@ inputs:
 runs:
   using: 'node12'
   main: 'dist/index.js'
+
+branding:
+  color: purple
+  icon: send

@@ -29,8 +29,8 @@ async function run(): Promise<void> {
     if(listResp.status != 200) throw new Error(`Got HTTP ${listResp.status} calling list workflows API 💩`)
 
     // Locate workflow by name as we need it's id
-    const workflowFind = listResp.data.workflows.find((w: Record<string, string>) => {
-      return w['name'] === workflowName
+    const workflowFind = listResp.data.workflows.find((wf: Record<string, string>) => {
+      return wf['name'] === workflowName
     })
     if(!workflowFind) throw new Error(`Unable to find workflow named '${workflowName}' in ${repo} 😥`)
     console.log(`Workflow id is: ${workflowFind.id}`)
