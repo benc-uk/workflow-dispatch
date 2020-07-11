@@ -1,0 +1,16 @@
+name: Message Echo 2
+
+on: 
+  workflow_dispatch:
+    inputs:
+      message:
+        required: false
+        default: "this is echo 2"
+        description: "Message to echo"
+
+jobs:
+  hello:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Echo message
+        run: echo '${{ github.event.inputs.message }}'

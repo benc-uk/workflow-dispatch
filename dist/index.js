@@ -40,7 +40,7 @@ module.exports =
 /******/ 	// the startup function
 /******/ 	function startup() {
 /******/ 		// Load entry module and return exports
-/******/ 		return __webpack_require__(104);
+/******/ 		return __webpack_require__(131);
 /******/ 	};
 /******/
 /******/ 	// run startup
@@ -394,34 +394,6 @@ module.exports = require("os");
 
 /***/ }),
 
-/***/ 104:
-/***/ (function(__unusedmodule, __unusedexports, __webpack_require__) {
-
-const core = __webpack_require__(470);
-const github = __webpack_require__(469);
-
-try {
-  const workflowId = core.getInput('workflow-id');
-  const ref = core.getInput('ref') || github.context.ref;
-  const token = core.getInput('token');
-
-  const octokit = github.getOctokit(token);
-
-  const owner = github.context.repo.owner;
-  const repo = github.context.repo.repo;
-  octokit.request(`POST repos/${owner}/${repo}/actions/workflows/${workflowId}/dispatches`, {
-    ref: ref
-  });
-  
-  // Get the JSON webhook payload for the event that triggered the workflow
-  const payload = JSON.stringify(github.context.payload, undefined, 2);
-  console.log(`The event payload: ${payload}`);
-} catch (error) {
-  core.setFailed(error.message);
-}
-
-/***/ }),
-
 /***/ 118:
 /***/ (function(module, __unusedexports, __webpack_require__) {
 
@@ -520,6 +492,92 @@ exports.getApiBaseUrl = getApiBaseUrl;
 /***/ (function(module) {
 
 module.exports = require("child_process");
+
+/***/ }),
+
+/***/ 131:
+/***/ (function(__unusedmodule, exports, __webpack_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const core = __importStar(__webpack_require__(470));
+const github = __importStar(__webpack_require__(469));
+// async wrapper function
+function run() {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            // Required inputs
+            const token = core.getInput('token');
+            const workflowName = core.getInput('workflow');
+            // Optional inputs, with defaults
+            const ref = core.getInput('ref') || github.context.ref;
+            const repo = core.getInput('repo') || `${github.context.repo.owner}/${github.context.repo.repo}`;
+            // Decode inputs, these MUST be a valid JSON string
+            let inputs = {};
+            const inputsJson = core.getInput('inputs');
+            if (inputsJson) {
+                inputs = JSON.parse(inputsJson);
+            }
+            // Get octokit client for making API calls
+            const octokit = github.getOctokit(token);
+            // List workflows via API
+            const listResp = yield octokit.request(`GET /repos/${repo}/actions/workflows`, {
+                ref: ref,
+                inputs: inputs
+            });
+            if (listResp.status != 200)
+                throw new Error(`Got HTTP ${listResp.status} calling list workflows API 💩`);
+            // Locate workflow by name as we need it's id
+            const workflowFind = listResp.data.workflows.find((w) => {
+                return w['name'] === workflowName;
+            });
+            if (!workflowFind)
+                throw new Error(`Unable to find workflow named '${workflowName}' in ${repo} 😥`);
+            console.log(`Workflow id is: ${workflowFind.id}`);
+            // Call workflow_dispatch API
+            const dispatchResp = yield octokit.request(`POST /repos/${repo}/actions/workflows/${workflowFind.id}/dispatches`, {
+                ref: ref,
+                inputs: inputs
+            });
+            core.info(`API response status: ${dispatchResp.status} 🚀`);
+        }
+        catch (error) {
+            core.setFailed(error.message);
+        }
+    });
+}
+// Call the main task run
+run();
+
 
 /***/ }),
 
