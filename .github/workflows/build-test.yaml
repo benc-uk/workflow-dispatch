@@ -18,15 +18,23 @@ jobs:
     - name: Invoke echo 1 workflow using this action
       uses: ./
       with:
-        workflow: Message Echo 1        
+        workflow: Message Echo 1
         token: ${{ secrets.PERSONAL_TOKEN }}
         inputs: '{"message": "blah blah"}'
 
     - name: Invoke echo 2 workflow using this action
       uses: ./
       with:
-        workflow: Message Echo 2        
+        workflow: Message Echo 2
         token: ${{ secrets.PERSONAL_TOKEN }}
+
+    - name: Invoke echo 1 workflow by id
+      uses: ./
+      with:
+        workflow: '1854247'
+        use-workflow-id: 'true'
+        token: ${{ secrets.PERSONAL_TOKEN }}
+        inputs: '{"message": "Mango jam"}'
 
     - name: Update repo with build
       uses: mikeal/publish-to-github-action@master

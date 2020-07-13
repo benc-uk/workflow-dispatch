@@ -7,16 +7,20 @@ inputs:
     required: true
   token: 
     description: 'GitHub token with repo write access, can NOT use secrets.GITHUB_TOKEN, see readme'
-    required: true    
+    required: true
+  use-workflow-id:
+    description: 'When true the workflow input is treated as an id rather than name'
+    required: false
+    default: 'false'
   inputs:
     description: 'Inputs to pass to the workflow, must be a JSON string.'
-    required: false    
+    required: false
   ref:
     description: 'The reference of the workflow run. The reference can be a branch, tag, or a commit SHA'
     required: false
   repo:
     description: 'Repo owner & name, slash separated, only set if invoking a workflow in a different repo'
-    required: false    
+    required: false 
 
 runs:
   using: 'node12'
