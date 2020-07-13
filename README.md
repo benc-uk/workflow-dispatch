@@ -5,7 +5,7 @@ The workflow must be configured for this event type e.g. `on: [workflow_dispatch
 
 This allows you to chain workflows, the classic use case is have a CI build workflow, trigger a CD release/deploy workflow when it completes. Allowing you to maintain separate workflows for CI and CD, and pass data between them as required.
 
-For details of `workflow_dispatch` see [this blog post introducing this type of event trigger](https://github.blog/changelog/2020-07-06-github-actions-manual-triggers-with-workflow_dispatch/)
+For details of the `workflow_dispatch` even see [this blog post introducing this type of trigger](https://github.blog/changelog/2020-07-06-github-actions-manual-triggers-with-workflow_dispatch/)
 
 Note. The GitHub UI will report flows triggered by this action as "manually triggered" even though they have been run programmatically via another workflow and the API
 
