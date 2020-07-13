@@ -556,7 +556,7 @@ function run() {
             });
             if (listResp.status != 200)
                 throw new Error(`Got HTTP ${listResp.status} calling list workflows API 💩`);
-            // Debug
+            // Debug response if ACTIONS_STEP_DEBUG is enabled
             core.debug(listResp.data);
             // Locate workflow by name as we need it's id
             const workflowFind = listResp.data.workflows.find((wf) => {
