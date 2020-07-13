@@ -30,7 +30,7 @@ async function run(): Promise<void> {
 
     // Debug response if ACTIONS_STEP_DEBUG is enabled
     core.debug('### START List Workflows response data')
-    core.debug(listResp.data)
+    core.debug(JSON.stringify(listResp.data, null, 3))
     core.debug('### END:  List Workflows response data')
 
     // Locate workflow by name as we need it's id
