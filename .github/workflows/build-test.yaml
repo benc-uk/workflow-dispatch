@@ -32,7 +32,6 @@ jobs:
       uses: ./
       with:
         workflow: '1854247'
-        use-workflow-id: 'true'
         token: ${{ secrets.PERSONAL_TOKEN }}
         inputs: '{"message": "Mango jam"}'
 

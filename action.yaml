@@ -3,15 +3,11 @@ description: 'Trigger and chain GitHub Actions workflows with workflow_dispatch 
 
 inputs:
   workflow: 
-    description: 'Name of workflow to run'
+    description: 'Name or ID of workflow to run'
     required: true
   token: 
     description: 'GitHub token with repo write access, can NOT use secrets.GITHUB_TOKEN, see readme'
     required: true
-  use-workflow-id:
-    description: 'When true the workflow input is treated as an id rather than name'
-    required: false
-    default: 'false'
   inputs:
     description: 'Inputs to pass to the workflow, must be a JSON string.'
     required: false
