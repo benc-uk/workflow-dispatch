@@ -34,7 +34,7 @@ async function run(): Promise<void> {
     // Locate workflow by name as we need it's id
     const foundWorkflow = listResp.data.workflows.find((wf: Record<string, string>) => {
       // Match on name or id
-      return (wf['name'] === workflowReference || wf['id'] === workflowReference)
+      return (wf['name'] === workflowReference || wf['id'].toString() === workflowReference)
     })
     if(!foundWorkflow) throw new Error(`Unable to find workflow '${workflowReference}' in ${repo} 😥`)
 
