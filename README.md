@@ -11,7 +11,7 @@ Note. The GitHub UI will report flows triggered by this action as "manually trig
 
 ## Inputs
 ### `workflow`
-**Required.** The name of the workflow to trigger and run.
+**Required.** The name of the workflow to trigger and run. This is the name decared in the YAML, not the filename
 
 ### `token`
 
