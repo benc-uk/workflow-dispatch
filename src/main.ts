@@ -28,6 +28,9 @@ async function run(): Promise<void> {
     })
     if(listResp.status != 200) throw new Error(`Got HTTP ${listResp.status} calling list workflows API 💩`)
 
+    // Debug
+    core.debug(listResp.data)
+
     // Locate workflow by name as we need it's id
     const workflowFind = listResp.data.workflows.find((wf: Record<string, string>) => {
       return wf['name'] === workflowName

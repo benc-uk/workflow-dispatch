@@ -1,0 +1,12 @@
+POST https://api.github.com/repos/benc-uk/workflow-dispatch/actions/workflows/1300956/dispatches
+Authorization: Basic benc-uk:{{$dotenv GITHUB_PAT}}
+Content-Type: application/json
+
+{
+  "ref": "refs/heads/master"
+}
+
+###
+
+GET https://api.github.com/repos/benc-uk/priv-test/actions/workflows
+Authorization: Basic benc-uk:{{$dotenv GITHUB_PAT}}
