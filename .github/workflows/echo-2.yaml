@@ -4,12 +4,12 @@ on:
   workflow_dispatch:
     inputs:
       message:
+        description: "Message to echo"
         required: false
         default: "this is echo 2"
-        description: "Message to echo"
 
 jobs:
-  hello:
+  echo:
     runs-on: ubuntu-latest
     steps:
       - name: Echo message

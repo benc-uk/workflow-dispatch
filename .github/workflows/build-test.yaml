@@ -1,14 +1,19 @@
-name: Test Action
+name: Build & Test
 
 on:
   push
 
 jobs:
-  test:
+  build:
     runs-on: ubuntu-latest
     steps:
     - name: Check out repository
       uses: actions/checkout@v2
+
+    - name: Build with ncc
+      run: |
+        npm install
+        npm run build
 
     - name: Invoke echo 1 workflow using this action
       uses: ./
@@ -22,6 +27,11 @@ jobs:
       with:
         workflow: Message Echo 2        
         token: ${{ secrets.PERSONAL_TOKEN }}
+
+    - name: Update repo with build
+      uses: mikeal/publish-to-github-action@master
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     # - name: Invoke external workflow using this action
     #   uses: ./
