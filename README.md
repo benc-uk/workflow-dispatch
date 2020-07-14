@@ -7,11 +7,13 @@ This allows you to chain workflows, the classic use case is have a CI build work
 
 For details of the `workflow_dispatch` even see [this blog post introducing this type of trigger](https://github.blog/changelog/2020-07-06-github-actions-manual-triggers-with-workflow_dispatch/)
 
-Note. The GitHub UI will report flows triggered by this action as "manually triggered" even though they have been run programmatically via another workflow and the API
+*Note 1.* The GitHub UI will report flows triggered by this action as "manually triggered" even though they have been run programmatically via another workflow and the API
+
+*Note 2.* If you want to reference the target workflow by ID, you will need to list them with the following REST API call `curl https://api.github.com/repos/{{owner}}/{{repo}}/actions/workflows -H "Authorization: token {{pat-token}}"`
 
 ## Inputs
 ### `workflow`
-**Required.** The name of the workflow to trigger and run. This is the name decared in the YAML, not the filename
+**Required.** The name or ID of the workflow to trigger and run. This is the name declared in the YAML, not the filename
 
 ### `token`
 

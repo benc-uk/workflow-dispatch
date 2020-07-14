@@ -1,7 +1,16 @@
+// ----------------------------------------------------------------------------
+// Copyright (c) Ben Coleman, 2020
+// Licensed under the MIT License.
+//
+// Workflow Dispatch Action - Main task code
+// ----------------------------------------------------------------------------
+
 import * as core from '@actions/core'
 import * as github from '@actions/github'
 
-// async wrapper function
+//
+// Main task function (async wrapper)
+//
 async function run(): Promise<void> {
   try {
     // Required inputs
@@ -11,7 +20,7 @@ async function run(): Promise<void> {
     const ref = core.getInput('ref')   || github.context.ref
     const repo = core.getInput('repo') || `${github.context.repo.owner}/${github.context.repo.repo}`
 
-    // Decode inputs, these MUST be a valid JSON string
+    // Decode inputs, this MUST be a valid JSON string
     let inputs = {}
     const inputsJson = core.getInput('inputs')
     if(inputsJson) {
@@ -21,7 +30,7 @@ async function run(): Promise<void> {
     // Get octokit client for making API calls
     const octokit = github.getOctokit(token)
 
-    // List workflows via API
+    // List workflows in repo via API
     const listResp = await octokit.request(`GET /repos/${repo}/actions/workflows`, {
       ref: ref,
       inputs: inputs
@@ -35,14 +44,15 @@ async function run(): Promise<void> {
 
     // Locate workflow by name as we need it's id
     const foundWorkflow = listResp.data.workflows.find((wf: Record<string, string>) => {
-      // Match on name or id
+      // Match on name or id, there's a slim chance someone names their workflow 1803663 but they are crazy
       return (wf['name'] === workflowReference || wf['id'].toString() === workflowReference)
     })
+
     if(!foundWorkflow) throw new Error(`Unable to find workflow '${workflowReference}' in ${repo} 😥`)
 
     console.log(`Workflow id is: ${foundWorkflow.id}`)
 
-    // Call workflow_dispatch API
+    // Call workflow_dispatch API to trigger the workflow
     const dispatchResp = await octokit.request(`POST /repos/${repo}/actions/workflows/${foundWorkflow.id}/dispatches`, {
       ref: ref,
       inputs: inputs
@@ -53,5 +63,7 @@ async function run(): Promise<void> {
   }
 }
 
-// Call the main task run
+//
+// Call the main task run function
+//
 run()
