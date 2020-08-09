@@ -545,7 +545,7 @@ function run() {
         try {
             // Required inputs
             const token = core.getInput('token');
-            const workflowName = core.getInput('workflow');
+            const workflowRef = core.getInput('workflow');
             // Optional inputs, with defaults
             const ref = core.getInput('ref') || github.context.ref;
             const [owner, repo] = core.getInput('repo')
@@ -559,16 +559,16 @@ function run() {
             }
             // Get octokit client for making API calls
             const octokit = github.getOctokit(token);
-            // List workflows via API
+            // List workflows via API, and handle paginated results
             const workflows = yield octokit.paginate(octokit.actions.listRepoWorkflows.endpoint.merge({ owner, repo, ref, inputs }));
             // Debug response if ACTIONS_STEP_DEBUG is enabled
             core.debug('### START List Workflows response data');
             core.debug(JSON.stringify(workflows, null, 3));
             core.debug('### END:  List Workflows response data');
-            // Locate workflow by name as we need it's id
-            const workflowFind = workflows.find((workflow) => workflow.name === workflowName);
+            // Locate workflow either by name or id
+            const workflowFind = workflows.find((workflow) => workflow.name === workflowRef || workflow.id.toString() === workflowRef);
             if (!workflowFind)
-                throw new Error(`Unable to find workflow named '${workflowName}' in ${owner}/${repo} 😥`);
+                throw new Error(`Unable to find workflow '${workflowRef}' in ${owner}/${repo} 😥`);
             console.log(`Workflow id is: ${workflowFind.id}`);
             // Call workflow_dispatch API
             const dispatchResp = yield octokit.request(`POST /repos/${owner}/${repo}/actions/workflows/${workflowFind.id}/dispatches`, {
