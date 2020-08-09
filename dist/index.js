@@ -545,13 +545,13 @@ function run() {
         try {
             // Required inputs
             const token = core.getInput('token');
-            const workflowReference = core.getInput('workflow');
+            const workflowName = core.getInput('workflow');
             // Optional inputs, with defaults
             const ref = core.getInput('ref') || github.context.ref;
             const [owner, repo] = core.getInput('repo')
                 ? core.getInput('repo').split('/')
                 : [github.context.repo.owner, github.context.repo.repo];
-            // Decode inputs, these MUST be a valid JSON string
+            // Decode inputs, this MUST be a valid JSON string
             let inputs = {};
             const inputsJson = core.getInput('inputs');
             if (inputsJson) {
@@ -561,6 +561,10 @@ function run() {
             const octokit = github.getOctokit(token);
             // List workflows via API
             const workflows = yield octokit.paginate(octokit.actions.listRepoWorkflows.endpoint.merge({ owner, repo, ref, inputs }));
+            // Debug response if ACTIONS_STEP_DEBUG is enabled
+            core.debug('### START List Workflows response data');
+            core.debug(JSON.stringify(workflows, null, 3));
+            core.debug('### END:  List Workflows response data');
             // Locate workflow by name as we need it's id
             const workflowFind = workflows.find((workflow) => workflow.name === workflowName);
             if (!workflowFind)
