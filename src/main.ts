@@ -16,7 +16,7 @@ async function run(): Promise<void> {
   try {
     // Required inputs
     const token = core.getInput('token')
-    const workflowName = core.getInput('workflow')
+    const workflowRef = core.getInput('workflow')
     // Optional inputs, with defaults
     const ref = core.getInput('ref')   || github.context.ref
     const [owner, repo] = core.getInput('repo')
@@ -33,7 +33,7 @@ async function run(): Promise<void> {
     // Get octokit client for making API calls
     const octokit = github.getOctokit(token)
 
-    // List workflows via API
+    // List workflows via API, and handle paginated results
     const workflows: ActionsGetWorkflowResponseData[] =
       await octokit.paginate(octokit.actions.listRepoWorkflows.endpoint.merge({ owner, repo, ref, inputs }))
 
@@ -42,9 +42,9 @@ async function run(): Promise<void> {
     core.debug(JSON.stringify(workflows, null, 3))
     core.debug('### END:  List Workflows response data')
 
-    // Locate workflow by name as we need it's id
-    const workflowFind = workflows.find((workflow) => workflow.name === workflowName)
-    if(!workflowFind) throw new Error(`Unable to find workflow named '${workflowName}' in ${owner}/${repo} 😥`)
+    // Locate workflow either by name or id
+    const workflowFind = workflows.find((workflow) => workflow.name === workflowRef || workflow.id.toString() === workflowRef)
+    if(!workflowFind) throw new Error(`Unable to find workflow '${workflowRef}' in ${owner}/${repo} 😥`)
     console.log(`Workflow id is: ${workflowFind.id}`)
 
     // Call workflow_dispatch API
