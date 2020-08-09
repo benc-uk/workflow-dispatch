@@ -7,6 +7,7 @@
 
 import * as core from '@actions/core'
 import * as github from '@actions/github'
+import { ActionsGetWorkflowResponseData } from '@octokit/types'
 
 //
 // Main task function (async wrapper)
@@ -15,10 +16,12 @@ async function run(): Promise<void> {
   try {
     // Required inputs
     const token = core.getInput('token')
-    const workflowReference = core.getInput('workflow')
+    const workflowName = core.getInput('workflow')
     // Optional inputs, with defaults
     const ref = core.getInput('ref')   || github.context.ref
-    const repo = core.getInput('repo') || `${github.context.repo.owner}/${github.context.repo.repo}`
+    const [owner, repo] = core.getInput('repo')
+      ? core.getInput('repo').split('/')
+      : [github.context.repo.owner, github.context.repo.repo]
 
     // Decode inputs, this MUST be a valid JSON string
     let inputs = {}
@@ -30,30 +33,22 @@ async function run(): Promise<void> {
     // Get octokit client for making API calls
     const octokit = github.getOctokit(token)
 
-    // List workflows in repo via API
-    const listResp = await octokit.request(`GET /repos/${repo}/actions/workflows`, {
-      ref: ref,
-      inputs: inputs
-    })
-    if(listResp.status != 200) throw new Error(`Got HTTP ${listResp.status} calling list workflows API 💩`)
+    // List workflows via API
+    const workflows: ActionsGetWorkflowResponseData[] =
+      await octokit.paginate(octokit.actions.listRepoWorkflows.endpoint.merge({ owner, repo, ref, inputs }))
 
     // Debug response if ACTIONS_STEP_DEBUG is enabled
     core.debug('### START List Workflows response data')
-    core.debug(JSON.stringify(listResp.data, null, 3))
+    core.debug(JSON.stringify(workflows, null, 3))
     core.debug('### END:  List Workflows response data')
 
     // Locate workflow by name as we need it's id
-    const foundWorkflow = listResp.data.workflows.find((wf: Record<string, string>) => {
-      // Match on name or id, there's a slim chance someone names their workflow 1803663 but they are crazy
-      return (wf['name'] === workflowReference || wf['id'].toString() === workflowReference)
-    })
+    const workflowFind = workflows.find((workflow) => workflow.name === workflowName)
+    if(!workflowFind) throw new Error(`Unable to find workflow named '${workflowName}' in ${owner}/${repo} 😥`)
+    console.log(`Workflow id is: ${workflowFind.id}`)
 
-    if(!foundWorkflow) throw new Error(`Unable to find workflow '${workflowReference}' in ${repo} 😥`)
-
-    console.log(`Workflow id is: ${foundWorkflow.id}`)
-
-    // Call workflow_dispatch API to trigger the workflow
-    const dispatchResp = await octokit.request(`POST /repos/${repo}/actions/workflows/${foundWorkflow.id}/dispatches`, {
+    // Call workflow_dispatch API
+    const dispatchResp = await octokit.request(`POST /repos/${owner}/${repo}/actions/workflows/${workflowFind.id}/dispatches`, {
       ref: ref,
       inputs: inputs
     })
