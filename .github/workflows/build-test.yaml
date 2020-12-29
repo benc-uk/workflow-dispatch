@@ -11,36 +11,157 @@ jobs:
     steps:
     - name: Check out repository
       uses: actions/checkout@v2
-
+    - uses: actions/setup-node@v2
+      with:
+        node-version: '12'
     - name: Build with ncc
       run: |
-        npm install
-        npm run build
+        npm install -g yarn
+        yarn install
+        yarn run build
+    - name: Archive dist
+      uses: actions/upload-artifact@v2
+      with:
+        name: build
+        path: dist
 
-    - name: Invoke echo 1 workflow using this action
+  echo-1-test:
+    needs: [build]
+    runs-on: ubuntu-latest
+    name: "echo-1-test [trigger|by workflow name]"
+    steps:
+    - name: Check out repository
+      uses: actions/checkout@v2
+    - name: Download dist
+      uses: actions/download-artifact@v2
+      with:
+        name: build
+        path: dist
+    - name: Invoke echo 1 workflow using this action (do not wait for completion)
       uses: ./
       with:
         workflow: Message Echo 1
         token: ${{ secrets.PERSONAL_TOKEN }}
         inputs: '{"message": "blah blah"}'
+        wait-for-completion: false
 
+  echo-2-test:
+    needs: [build]
+    runs-on: ubuntu-latest
+    name: "echo-2-test [trigger|by workflow filename]"
+    steps:
+    - name: Check out repository
+      uses: actions/checkout@v2
+    - name: Download dist
+      uses: actions/download-artifact@v2
+      with:
+        name: build
+        path: dist
     - name: Invoke echo 2 workflow using this action
       uses: ./
       with:
-        workflow: Message Echo 2
+        workflow: echo-2.yaml
         token: ${{ secrets.PERSONAL_TOKEN }}
+        wait-for-completion: false
 
-    - name: Invoke echo 1 workflow by id
+    # - name: Invoke echo 1 workflow by id
+    #   uses: ./
+    #   with:
+    #     workflow: '1854247'
+    #     token: ${{ secrets.PERSONAL_TOKEN }}
+    #     inputs: '{"message": "Mango jam"}'
+    #     wait-for-completion: false
+
+  long-running-test:
+    needs: [build]
+    runs-on: ubuntu-latest
+    name: "long-running-test [trigger+wait|by workflow filename|shoud succeed]"
+    steps:
+    - name: Check out repository
+      uses: actions/checkout@v2
+    - name: Download dist
+      uses: actions/download-artifact@v2
+      with:
+        name: build
+        path: dist
+    - name: Invoke 'long-running' workflow and wait for result using this action
+      id: long-running-workflow
       uses: ./
       with:
-        workflow: '1854247'
+        workflow: long-running.yml
         token: ${{ secrets.PERSONAL_TOKEN }}
-        inputs: '{"message": "Mango jam"}'
+        wait-for-completion-interval: 10s
+        wait-for-completion-timeout: 5m
+      continue-on-error: true
+    - uses: nick-invision/assert-action@v1
+      with:
+        expected: success
+        actual: ${{ steps.long-running-workflow.outputs.workflow-conclusion }}
+    - uses: nick-invision/assert-action@v1
+      with:
+        expected: success
+        actual: ${{ steps.long-running-workflow.outcome }}
 
-    - name: Update repo with build
-      uses: mikeal/publish-to-github-action@master
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  failing-test:
+    needs: [build]
+    runs-on: ubuntu-latest
+    name: "failing-test [trigger+wait|by workflow filename|shoud report failure]"
+    steps:
+    - name: Check out repository
+      uses: actions/checkout@v2
+    - name: Download dist
+      uses: actions/download-artifact@v2
+      with:
+        name: build
+        path: dist
+    - name: Invoke 'failing' workflow and wait for result using this action
+      id: failing-workflow
+      uses: ./
+      with:
+        workflow: failing.yml
+        token: ${{ secrets.PERSONAL_TOKEN }}
+        wait-for-completion-interval: 10s
+        wait-for-completion-timeout: 5m
+      continue-on-error: true
+    - run: echo "worflow-conclusion=${{ steps.failing-workflow.outputs.workflow-conclusion }}"
+    - uses: nick-invision/assert-action@v1
+      with:
+        expected: failure
+        actual: ${{ steps.failing-workflow.outputs.workflow-conclusion }}
+    - uses: nick-invision/assert-action@v1
+      with:
+        expected: failure
+        actual: ${{ steps.failing-workflow.outcome }}
+
+  timeout-test:
+    needs: [build]
+    runs-on: ubuntu-latest
+    name: "timeout-test [trigger+wait|by workflow filename|shoud report timed_out]"
+    steps:
+    - name: Check out repository
+      uses: actions/checkout@v2
+    - name: Download dist
+      uses: actions/download-artifact@v2
+      with:
+        name: build
+        path: dist
+    - name: Invoke 'timeout' workflow and wait for result using this action
+      id: timeout-workflow
+      uses: ./
+      with:
+        workflow: timeout.yml
+        token: ${{ secrets.PERSONAL_TOKEN }}
+        wait-for-completion-interval: 10s
+        wait-for-completion-timeout: 30s
+      continue-on-error: true
+    - uses: nick-invision/assert-action@v1
+      with:
+        expected: timed_out
+        actual: ${{ steps.timeout-workflow.outputs.workflow-conclusion }}
+    - uses: nick-invision/assert-action@v1
+      with:
+        expected: failure
+        actual: ${{ steps.timeout-workflow.outcome }}
 
     # - name: Invoke external workflow using this action
     #   uses: ./
@@ -49,4 +170,20 @@ jobs:
     #     repo: benc-uk/dapr-store
     #     token: ${{ secrets.PERSONAL_TOKEN }}
     #     ref: master 
-   
+
+  deploy:
+    needs: [echo-1-test, echo-2-test, long-running-test, failing-test, timeout-test]
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check out repository
+      uses: actions/checkout@v2
+    - name: Download dist
+      uses: actions/download-artifact@v2
+      with:
+        name: build
+        path: dist
+    - name: Update repo with build
+      uses: mikeal/publish-to-github-action@master
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+

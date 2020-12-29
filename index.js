@@ -5769,45 +5769,6 @@ function wrappy (fn, cb) {
 
 /***/ }),
 
-/***/ 417:
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-"use strict";
-
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.debug = void 0;
-const core = __importStar(__webpack_require__(186));
-function debug(title, content) {
-    if (core.isDebug()) {
-        core.info(`::group::${title}`);
-        core.debug(JSON.stringify(content, null, 3));
-        core.info('::endgroup::');
-    }
-}
-exports.debug = debug;
-
-
-/***/ }),
-
 /***/ 399:
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
@@ -5903,25 +5864,6 @@ function sleep(ms) {
 function isTimedOut(start, waitForCompletionTimeout) {
     return Date.now() > start + waitForCompletionTimeout;
 }
-function formatDuration(duration) {
-    const durationSeconds = duration / 1000;
-    const hours = Math.floor(durationSeconds / 3600);
-    const minutes = Math.floor((durationSeconds - (hours * 3600)) / 60);
-    const seconds = durationSeconds - (hours * 3600) - (minutes * 60);
-    let hoursStr = hours + '';
-    let minutesStr = minutes + '';
-    let secondsStr = seconds + '';
-    if (hours < 10) {
-        hoursStr = "0" + hoursStr;
-    }
-    if (minutes < 10) {
-        minutesStr = "0" + minutesStr;
-    }
-    if (seconds < 10) {
-        secondsStr = "0" + secondsStr;
-    }
-    return hoursStr + 'h ' + minutesStr + 'm ' + secondsStr + 's';
-}
 //
 // Main task function (async wrapper)
 //
@@ -5945,14 +5887,12 @@ function run() {
                 try {
                     result = yield workflowHandler.getWorkflowRunStatus();
                     status = result.status;
-                    core.debug("Worflow is running for " + formatDuration(Date.now() - start));
                 }
                 catch (e) {
                     core.warning("Failed to get workflow status: " + e.message);
                 }
             } while (status !== workflow_handler_1.WorkflowRunStatus.COMPLETED && !isTimedOut(start, args.waitForCompletionTimeout));
             if (isTimedOut(start, args.waitForCompletionTimeout)) {
-                core.info(`Workflow wait timed out`);
                 core.setOutput('workflow-conclusion', workflow_handler_1.WorkflowRunConclusion.TIMED_OUT);
                 throw new Error('Workflow run has failed due to timeout');
             }
@@ -6016,7 +5956,6 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.WorkflowHandler = exports.WorkflowRunConclusion = exports.WorkflowRunStatus = void 0;
 const core = __importStar(__webpack_require__(186));
 const github = __importStar(__webpack_require__(438));
-const debug_1 = __webpack_require__(417);
 var WorkflowRunStatus;
 (function (WorkflowRunStatus) {
     WorkflowRunStatus["QUEUED"] = "queued";
@@ -6053,7 +5992,6 @@ class WorkflowHandler {
         this.owner = owner;
         this.repo = repo;
         this.ref = ref;
-        this.triggerDate = 0;
         // Get octokit client for making API calls
         this.octokit = github.getOctokit(token);
     }
@@ -6061,7 +5999,6 @@ class WorkflowHandler {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const workflowId = yield this.getWorkflowId();
-                this.triggerDate = Date.now();
                 const dispatchResp = yield this.octokit.actions.createWorkflowDispatch({
                     owner: this.owner,
                     repo: this.repo,
@@ -6069,7 +6006,6 @@ class WorkflowHandler {
                     ref: this.ref,
                     inputs
                 });
-                debug_1.debug('Workflow Dispatch', dispatchResp);
             }
             catch (error) {
                 core.setFailed(error.message);
@@ -6085,7 +6021,9 @@ class WorkflowHandler {
                     repo: this.repo,
                     run_id: runId
                 });
-                debug_1.debug('Workflow Run status', response);
+                core.debug('### START Workflow Run Status response data');
+                core.debug(JSON.stringify(response, null, 3));
+                core.debug('### END:  Workflow Run Status response data');
                 return {
                     status: ofStatus(response.data.status),
                     conclusion: ofConclusion(response.data.conclusion)
@@ -6108,22 +6046,17 @@ class WorkflowHandler {
                     owner: this.owner,
                     repo: this.repo,
                     workflow_id: workflowId,
+                    // branch: this.ref,
                     event: 'workflow_dispatch'
                 });
-                debug_1.debug('List Workflow Runs', response);
-                const runs = response.data.workflow_runs
-                    .filter((r) => new Date(r.created_at).valueOf() >= this.triggerDate);
-                debug_1.debug(`Filtered Workflow Runs (after trigger date: ${new Date(this.triggerDate).toISOString()})`, runs.map((r) => ({
-                    id: r.id,
-                    name: r.name,
-                    created_at: r.creatd_at,
-                    triggerDate: new Date(this.triggerDate).toISOString(),
-                    created_at_ts: new Date(r.created_at).valueOf(),
-                    triggerDateTs: this.triggerDate
-                })));
+                const runs = response.data.workflow_runs;
+                core.debug('### START List Workflow Runs response data');
+                core.debug(JSON.stringify(response, null, 3));
+                core.debug('### END:  List Workflow Runs response data');
                 if (runs.length == 0) {
-                    throw new Error('Run not found');
+                    throw new Error('run not found');
                 }
+                // TODO: ensure that it is not a previous run
                 this.workflowRunId = runs[0].id;
                 return this.workflowRunId;
             }
@@ -6143,12 +6076,22 @@ class WorkflowHandler {
                 return this.workflowId;
             }
             try {
+                // List workflows via API, and handle paginated results
+                // const workflows: any[] = await this.octokit.paginate(this.octokit.actions.listRepoWorkflows.endpoint.merge({ 
+                //   owner: this.owner, 
+                //   repo: this.repo, 
+                //   ref: this.ref, 
+                //   inputs: this.inputs 
+                // }));
                 const workflowsResp = yield this.octokit.actions.listRepoWorkflows({
                     owner: this.owner,
                     repo: this.repo
                 });
                 const workflows = workflowsResp.data.workflows;
-                debug_1.debug(`List Workflows`, workflows);
+                // Debug response if ACTIONS_STEP_DEBUG is enabled
+                core.debug('### START List Workflows response data');
+                core.debug(JSON.stringify(workflows, null, 3));
+                core.debug('### END:  List Workflows response data');
                 // Locate workflow either by name or id
                 const workflowFind = workflows.find((workflow) => workflow.name === this.workflowRef || workflow.id.toString() === this.workflowRef);
                 if (!workflowFind)

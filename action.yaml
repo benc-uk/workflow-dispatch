@@ -16,7 +16,19 @@ inputs:
     required: false
   repo:
     description: 'Repo owner & name, slash separated, only set if invoking a workflow in a different repo'
-    required: false 
+    required: false
+  wait-for-completion:
+    description: 'Block until the triggered workflow has finished'
+    required: false
+    default: true
+  wait-for-completion-timeout:
+    description: 'Maximum amount of time (+unit) to wait to mark workflow as timed out' 
+    required: false
+    default: 1h
+  wait-for-completion-interval:
+    description: 'Time to wait (+unit) between two polls to get run status'
+    required: false
+    default: 30s
 
 runs:
   using: 'node12'

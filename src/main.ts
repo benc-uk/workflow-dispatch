@@ -7,54 +7,70 @@
 
 import * as core from '@actions/core'
 import * as github from '@actions/github'
-import { ActionsGetWorkflowResponseData } from '@octokit/types'
+import { formatDuration, getArgs, isTimedOut, sleep } from './utils';
+import { WorkflowHandler, WorkflowRunConclusion, WorkflowRunResult, WorkflowRunStatus } from './workflow-handler';
+
+async function waitForCompletionOrTimeout(workflowHandler: WorkflowHandler, checkStatusInterval: number, waitForCompletionTimeout: number) {
+  const start = Date.now();
+  let first = true;
+  let status;
+  let result;
+  do {
+    await sleep(checkStatusInterval);
+    try {
+      result = await workflowHandler.getWorkflowRunStatus();
+      status = result.status;
+      if (first) {
+        core.info(`You can follow the running workflow here: ${result.url}`);
+        first = false;
+      }
+      core.debug(`Worflow is running for ${formatDuration(Date.now() - start)}. Current status=${status}`)
+    } catch(e) {
+      core.warning(`Failed to get workflow status: ${e.message}`);
+    }
+  } while (status !== WorkflowRunStatus.COMPLETED && !isTimedOut(start, waitForCompletionTimeout));
+  return { result, start }
+}
+
+function computeConclusion(start: number, waitForCompletionTimeout: number, result?: WorkflowRunResult) {
+  if (isTimedOut(start, waitForCompletionTimeout)) {
+    core.info(`Workflow wait timed out`);
+    core.setOutput('workflow-conclusion', WorkflowRunConclusion.TIMED_OUT);
+    throw new Error('Workflow run has failed due to timeout');
+  }
+
+  core.info(`Workflow completed with conclusion=${result?.conclusion}`);
+  const conclusion = result?.conclusion;
+  core.setOutput('workflow-conclusion', conclusion);
+
+  if (conclusion === WorkflowRunConclusion.FAILURE)   throw new Error('Workflow run has failed');
+  if (conclusion === WorkflowRunConclusion.CANCELLED) throw new Error('Workflow run was cancelled');
+  if (conclusion === WorkflowRunConclusion.TIMED_OUT) throw new Error('Workflow run has failed due to timeout');
+}
 
 //
 // Main task function (async wrapper)
 //
 async function run(): Promise<void> {
   try {
-    // Required inputs
-    const token = core.getInput('token')
-    const workflowRef = core.getInput('workflow')
-    // Optional inputs, with defaults
-    const ref = core.getInput('ref')   || github.context.ref
-    const [owner, repo] = core.getInput('repo')
-      ? core.getInput('repo').split('/')
-      : [github.context.repo.owner, github.context.repo.repo]
+    const args = getArgs();
+    const workflowHandler = new WorkflowHandler(args.token, args.workflowRef, args.owner, args.repo, args.ref);
 
-    // Decode inputs, this MUST be a valid JSON string
-    let inputs = {}
-    const inputsJson = core.getInput('inputs')
-    if(inputsJson) {
-      inputs = JSON.parse(inputsJson)
+    // Trigger workflow run
+    workflowHandler.triggerWorkflow(args.inputs);
+    core.info(`Workflow triggered 🚀`);
+
+    if (!args.waitForCompletion) {
+      return;
     }
 
-    // Get octokit client for making API calls
-    const octokit = github.getOctokit(token)
+    core.info(`Waiting for workflow completion`);
+    const { result, start } = await waitForCompletionOrTimeout(workflowHandler, args.checkStatusInterval, args.waitForCompletionTimeout);
 
-    // List workflows via API, and handle paginated results
-    const workflows: ActionsGetWorkflowResponseData[] =
-      await octokit.paginate(octokit.actions.listRepoWorkflows.endpoint.merge({ owner, repo, ref, inputs }))
+    computeConclusion(start, args.waitForCompletionTimeout, result);
 
-    // Debug response if ACTIONS_STEP_DEBUG is enabled
-    core.debug('### START List Workflows response data')
-    core.debug(JSON.stringify(workflows, null, 3))
-    core.debug('### END:  List Workflows response data')
-
-    // Locate workflow either by name or id
-    const workflowFind = workflows.find((workflow) => workflow.name === workflowRef || workflow.id.toString() === workflowRef)
-    if(!workflowFind) throw new Error(`Unable to find workflow '${workflowRef}' in ${owner}/${repo} 😥`)
-    console.log(`Workflow id is: ${workflowFind.id}`)
-
-    // Call workflow_dispatch API
-    const dispatchResp = await octokit.request(`POST /repos/${owner}/${repo}/actions/workflows/${workflowFind.id}/dispatches`, {
-      ref: ref,
-      inputs: inputs
-    })
-    core.info(`API response status: ${dispatchResp.status} 🚀`)
   } catch (error) {
-    core.setFailed(error.message)
+    core.setFailed(error.message);
   }
 }
 

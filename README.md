@@ -11,9 +11,11 @@ For details of the `workflow_dispatch` even see [this blog post introducing this
 
 *Note 2.* If you want to reference the target workflow by ID, you will need to list them with the following REST API call `curl https://api.github.com/repos/{{owner}}/{{repo}}/actions/workflows -H "Authorization: token {{pat-token}}"`
 
+_This action is a fork of `benc-uk/workflow-dispatch` to add support for waiting for workflow completion._
+
 ## Inputs
 ### `workflow`
-**Required.** The name or ID of the workflow to trigger and run. This is the name declared in the YAML, not the filename
+**Required.** The name or the filename or ID of the workflow to trigger and run.
 
 ### `token`
 
@@ -30,23 +32,43 @@ The solution is to manually create a PAT and store it as a secret e.g. `${{ secr
 ### `repo`
 **Optional.** The default behavior is to trigger workflows in the same repo as the triggering workflow, if you wish to trigger in another GitHub repo "externally", then provide the owner + repo name with slash between them e.g. `microsoft/vscode`
 
+### `wait-for-completion`
+**Optional.** If `true`, this action will actively poll the workflow run to get the result of the triggered workflow. It is enabled by default. If the triggered workflow fails due to either `failure`, `timed_out` or `cancelled` then the step that has triggered the other workflow will be marked as failed too.
+
+### `wait-for-completion-timeout`
+**Optional.** The time to wait to mark triggered workflow has timed out. The time must be suffixed by the time unit e.g. `10m`. Time unit can be `s` for seconds, `m` for minutes and `h` for hours. It has no effect if `wait-for-completion` is `false`. Default is `1h`
+
+### `wait-for-completion-interval`
+**Optional.** The time to wait between two polls for getting run status. The time must be suffixed by the time unit e.g. `10m`. Time unit can be `s` for seconds, `m` for minutes and `h` for hours. It has no effect if `wait-for-completion` is `false`. Default is `30s`.
+**/!\ Do not use a value that is too small to avoid `API Rate limit exceeded`**
 
 ## Outputs
-None
+### `workflow-conclusion`
+The result of the triggered workflow. May be one of `success`, `failure`, `cancelled`, `timed_out`, `skipped`, `neutral`, `action_required`. The step in your workflow will fail if the triggered workflow completes with `failure`, `cancelled` or `timed_out`. Other workflow conlusion are considered success.
+Only available if `wait-for-completion` is `true`
 
 
 ## Example usage
 ```yaml
-- name: Invoke workflow without inputs
-  uses: benc-uk/workflow-dispatch@v1
+- name: Invoke workflow without inputs. Wait for result
+  uses: aurelien-baudet/workflow-dispatch@v2
   with:
     workflow: My Workflow
     token: ${{ secrets.PERSONAL_TOKEN }}
 ```
 
 ```yaml
+- name: Invoke workflow without inputs. Don't wait for result
+  uses: aurelien-baudet/workflow-dispatch@v2
+  with:
+    workflow: My Workflow
+    token: ${{ secrets.PERSONAL_TOKEN }}
+    wait-for-completion: false
+```
+
+```yaml
 - name: Invoke workflow with inputs
-  uses: benc-uk/workflow-dispatch@v1
+  uses: aurelien-baudet/workflow-dispatch@v2
   with:
     workflow: Another Workflow
     token: ${{ secrets.PERSONAL_TOKEN }}
@@ -55,10 +77,22 @@ None
 
 ```yaml
 - name: Invoke workflow in another repo with inputs
-  uses: benc-uk/workflow-dispatch@v1
+  uses: aurelien-baudet/workflow-dispatch@v2
   with:
     workflow: Some Workflow
     repo: benc-uk/example
     token: ${{ secrets.PERSONAL_TOKEN }}
     inputs: '{ "message": "blah blah", "debug": true }'
+```
+
+```yaml
+- name: Invoke workflow and handle result
+  id: trigger-step
+  uses: aurelien-baudet/workflow-dispatch@v2
+  with:
+    workflow: Another Workflow
+    token: ${{ secrets.PERSONAL_TOKEN }}
+- name: Another step that can handle the result
+  if: always()
+  run: echo "Another Workflow conclusion: ${{ steps.trigger-step.outputs.workflow-conclusion }}"
 ```
