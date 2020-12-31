@@ -1,5 +1,5 @@
-name: 'Workflow Dispatch'
-description: 'Trigger and chain GitHub Actions workflows with workflow_dispatch events'
+name: 'Workflow Dispatch and wait'
+description: 'Trigger and chain GitHub Actions workflows with workflow_dispatch events and wait for result'
 
 inputs:
   workflow: 

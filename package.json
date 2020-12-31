@@ -13,7 +13,7 @@
     "worflow",
     "trigger"
   ],
-  "author": "Ben Coleman",
+  "author": "Aurélien Baudet",
   "license": "MIT",
   "devDependencies": {
     "@actions/core": "1.2.6",
