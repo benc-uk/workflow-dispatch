@@ -5849,8 +5849,107 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__webpack_require__(186));
-const github = __importStar(__webpack_require__(438));
+const utils_1 = __webpack_require__(314);
 const workflow_handler_1 = __webpack_require__(971);
+function waitForCompletionOrTimeout(workflowHandler, checkStatusInterval, waitForCompletionTimeout) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const start = Date.now();
+        let first = true;
+        let status;
+        let result;
+        do {
+            yield utils_1.sleep(checkStatusInterval);
+            try {
+                result = yield workflowHandler.getWorkflowRunStatus();
+                status = result.status;
+                if (first) {
+                    core.info(`You can follow the running workflow here: ${result.url}`);
+                    first = false;
+                }
+                core.debug(`Worflow is running for ${utils_1.formatDuration(Date.now() - start)}. Current status=${status}`);
+            }
+            catch (e) {
+                core.warning(`Failed to get workflow status: ${e.message}`);
+            }
+        } while (status !== workflow_handler_1.WorkflowRunStatus.COMPLETED && !utils_1.isTimedOut(start, waitForCompletionTimeout));
+        return { result, start };
+    });
+}
+function computeConclusion(start, waitForCompletionTimeout, result) {
+    if (utils_1.isTimedOut(start, waitForCompletionTimeout)) {
+        core.info(`Workflow wait timed out`);
+        core.setOutput('workflow-conclusion', workflow_handler_1.WorkflowRunConclusion.TIMED_OUT);
+        throw new Error('Workflow run has failed due to timeout');
+    }
+    core.info(`Workflow completed with conclusion=${result === null || result === void 0 ? void 0 : result.conclusion}`);
+    const conclusion = result === null || result === void 0 ? void 0 : result.conclusion;
+    core.setOutput('workflow-conclusion', conclusion);
+    if (conclusion === workflow_handler_1.WorkflowRunConclusion.FAILURE)
+        throw new Error('Workflow run has failed');
+    if (conclusion === workflow_handler_1.WorkflowRunConclusion.CANCELLED)
+        throw new Error('Workflow run was cancelled');
+    if (conclusion === workflow_handler_1.WorkflowRunConclusion.TIMED_OUT)
+        throw new Error('Workflow run has failed due to timeout');
+}
+//
+// Main task function (async wrapper)
+//
+function run() {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            const args = utils_1.getArgs();
+            const workflowHandler = new workflow_handler_1.WorkflowHandler(args.token, args.workflowRef, args.owner, args.repo, args.ref);
+            // Trigger workflow run
+            workflowHandler.triggerWorkflow(args.inputs);
+            core.info(`Workflow triggered 🚀`);
+            if (!args.waitForCompletion) {
+                return;
+            }
+            core.info(`Waiting for workflow completion`);
+            const { result, start } = yield waitForCompletionOrTimeout(workflowHandler, args.checkStatusInterval, args.waitForCompletionTimeout);
+            computeConclusion(start, args.waitForCompletionTimeout, result);
+        }
+        catch (error) {
+            core.setFailed(error.message);
+        }
+    });
+}
+//
+// Call the main task run function
+//
+run();
+
+
+/***/ }),
+
+/***/ 314:
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.formatDuration = exports.isTimedOut = exports.sleep = exports.getArgs = void 0;
+const core = __importStar(__webpack_require__(186));
+const github = __importStar(__webpack_require__(438));
 var TimeUnit;
 (function (TimeUnit) {
     TimeUnit[TimeUnit["S"] = 1000] = "S";
@@ -5897,12 +5996,15 @@ function getArgs() {
         waitForCompletionTimeout
     };
 }
+exports.getArgs = getArgs;
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
+exports.sleep = sleep;
 function isTimedOut(start, waitForCompletionTimeout) {
     return Date.now() > start + waitForCompletionTimeout;
 }
+exports.isTimedOut = isTimedOut;
 function formatDuration(duration) {
     const durationSeconds = duration / 1000;
     const hours = Math.floor(durationSeconds / 3600);
@@ -5922,59 +6024,7 @@ function formatDuration(duration) {
     }
     return hoursStr + 'h ' + minutesStr + 'm ' + secondsStr + 's';
 }
-//
-// Main task function (async wrapper)
-//
-function run() {
-    return __awaiter(this, void 0, void 0, function* () {
-        try {
-            const args = getArgs();
-            const workflowHandler = new workflow_handler_1.WorkflowHandler(args.token, args.workflowRef, args.owner, args.repo, args.ref);
-            // Trigger workflow run
-            workflowHandler.triggerWorkflow(args.inputs);
-            core.info(`Workflow triggered 🚀`);
-            if (!args.waitForCompletion) {
-                return;
-            }
-            core.info(`Waiting for workflow completion`);
-            const start = Date.now();
-            let status;
-            let result;
-            do {
-                yield sleep(args.checkStatusInterval);
-                try {
-                    result = yield workflowHandler.getWorkflowRunStatus();
-                    status = result.status;
-                    core.debug("Worflow is running for " + formatDuration(Date.now() - start));
-                }
-                catch (e) {
-                    core.warning("Failed to get workflow status: " + e.message);
-                }
-            } while (status !== workflow_handler_1.WorkflowRunStatus.COMPLETED && !isTimedOut(start, args.waitForCompletionTimeout));
-            if (isTimedOut(start, args.waitForCompletionTimeout)) {
-                core.info(`Workflow wait timed out`);
-                core.setOutput('workflow-conclusion', workflow_handler_1.WorkflowRunConclusion.TIMED_OUT);
-                throw new Error('Workflow run has failed due to timeout');
-            }
-            core.info(`Workflow completed with conclusion=${result === null || result === void 0 ? void 0 : result.conclusion}`);
-            const conclusion = result === null || result === void 0 ? void 0 : result.conclusion;
-            core.setOutput('workflow-conclusion', conclusion);
-            if (conclusion === workflow_handler_1.WorkflowRunConclusion.FAILURE)
-                throw new Error('Workflow run has failed');
-            if (conclusion === workflow_handler_1.WorkflowRunConclusion.CANCELLED)
-                throw new Error('Workflow run was cancelled');
-            if (conclusion === workflow_handler_1.WorkflowRunConclusion.TIMED_OUT)
-                throw new Error('Workflow run has failed due to timeout');
-        }
-        catch (error) {
-            core.setFailed(error.message);
-        }
-    });
-}
-//
-// Call the main task run function
-//
-run();
+exports.formatDuration = formatDuration;
 
 
 /***/ }),
@@ -6087,6 +6137,7 @@ class WorkflowHandler {
                 });
                 debug_1.debug('Workflow Run status', response);
                 return {
+                    url: response.data.html_url,
                     status: ofStatus(response.data.status),
                     conclusion: ofConclusion(response.data.conclusion)
                 };
