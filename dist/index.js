@@ -5851,10 +5851,26 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__webpack_require__(186));
 const utils_1 = __webpack_require__(314);
 const workflow_handler_1 = __webpack_require__(971);
+function getFollowUrl(workflowHandler, interval, timeout) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const start = Date.now();
+        let url;
+        do {
+            yield utils_1.sleep(interval);
+            try {
+                const result = yield workflowHandler.getWorkflowRunStatus();
+                url = result.url;
+            }
+            catch (e) {
+                core.debug(`Failed to get workflow url: ${e.message}`);
+            }
+        } while (!url && !utils_1.isTimedOut(start, timeout));
+        return url;
+    });
+}
 function waitForCompletionOrTimeout(workflowHandler, checkStatusInterval, waitForCompletionTimeout) {
     return __awaiter(this, void 0, void 0, function* () {
         const start = Date.now();
-        let first = true;
         let status;
         let result;
         do {
@@ -5862,10 +5878,6 @@ function waitForCompletionOrTimeout(workflowHandler, checkStatusInterval, waitFo
             try {
                 result = yield workflowHandler.getWorkflowRunStatus();
                 status = result.status;
-                if (first) {
-                    core.info(`You can follow the running workflow here: ${result.url}`);
-                    first = false;
-                }
                 core.debug(`Worflow is running for ${utils_1.formatDuration(Date.now() - start)}. Current status=${status}`);
             }
             catch (e) {
@@ -5902,11 +5914,17 @@ function run() {
             // Trigger workflow run
             workflowHandler.triggerWorkflow(args.inputs);
             core.info(`Workflow triggered 🚀`);
+            if (args.displayWorkflowUrl) {
+                const url = yield getFollowUrl(workflowHandler, args.displayWorkflowUrlInterval, args.displayWorkflowUrlTimeout);
+                core.info(`You can follow the running workflow here: ${url}`);
+                core.setOutput('workflow-url', url);
+            }
             if (!args.waitForCompletion) {
                 return;
             }
             core.info(`Waiting for workflow completion`);
             const { result, start } = yield waitForCompletionOrTimeout(workflowHandler, args.checkStatusInterval, args.waitForCompletionTimeout);
+            core.setOutput('workflow-url', result === null || result === void 0 ? void 0 : result.url);
             computeConclusion(start, args.waitForCompletionTimeout, result);
         }
         catch (error) {
@@ -5980,6 +5998,10 @@ function getArgs() {
     if (inputsJson) {
         inputs = JSON.parse(inputsJson);
     }
+    const displayWorkflowUrlStr = core.getInput('display-workflow-run-url');
+    const displayWorkflowUrl = displayWorkflowUrlStr && displayWorkflowUrlStr === 'true';
+    const displayWorkflowUrlTimeout = toMilliseconds(core.getInput('display-workflow-run-url-timeout'));
+    const displayWorkflowUrlInterval = toMilliseconds(core.getInput('display-workflow-run-url-interval'));
     const waitForCompletionStr = core.getInput('wait-for-completion');
     const waitForCompletion = waitForCompletionStr && waitForCompletionStr === 'true';
     const waitForCompletionTimeout = toMilliseconds(core.getInput('wait-for-completion-timeout'));
@@ -5991,6 +6013,9 @@ function getArgs() {
         owner,
         repo,
         inputs,
+        displayWorkflowUrl,
+        displayWorkflowUrlTimeout,
+        displayWorkflowUrlInterval,
         checkStatusInterval,
         waitForCompletion,
         waitForCompletionTimeout
