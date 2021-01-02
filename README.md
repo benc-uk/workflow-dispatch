@@ -39,10 +39,23 @@ The solution is to manually create a PAT and store it as a secret e.g. `${{ secr
 **Optional.** The time to wait to mark triggered workflow has timed out. The time must be suffixed by the time unit e.g. `10m`. Time unit can be `s` for seconds, `m` for minutes and `h` for hours. It has no effect if `wait-for-completion` is `false`. Default is `1h`
 
 ### `wait-for-completion-interval`
-**Optional.** The time to wait between two polls for getting run status. The time must be suffixed by the time unit e.g. `10m`. Time unit can be `s` for seconds, `m` for minutes and `h` for hours. It has no effect if `wait-for-completion` is `false`. Default is `30s`.
+**Optional.** The time to wait between two polls for getting run status. The time must be suffixed by the time unit e.g. `10m`. Time unit can be `s` for seconds, `m` for minutes and `h` for hours. It has no effect if `wait-for-completion` is `false`. Default is `1m`.
+**/!\ Do not use a value that is too small to avoid `API Rate limit exceeded`**
+
+### `display-worflow-run-url`
+**Optional.** If `true`, it displays in logs the URL of the triggered workflow. It is useful to follow the progress of the triggered workflow. It is enabled by default.
+
+### `display-worflow-run-url-timeout`
+**Optional.** The time to wait for getting the workflow run URL. If the timeout is reached, it doesn't fail and continues. Displaying the workflow URL is just for information purpose. The time must be suffixed by the time unit e.g. `10m`. Time unit can be `s` for seconds, `m` for minutes and `h` for hours. It has no effect if `display-worflow-run-url` is `false`. Default is `10m`
+
+### `display-worflow-run-url-interval`
+**Optional.** The time to wait between two polls for getting workflow run URL. The time must be suffixed by the time unit e.g. `10m`. Time unit can be `s` for seconds, `m` for minutes and `h` for hours. It has no effect if `display-worflow-run-url` is `false`. Default is `1m`.
 **/!\ Do not use a value that is too small to avoid `API Rate limit exceeded`**
 
 ## Outputs
+### `workflow-url`
+The URL of the workflow run that has been triggered. It may be undefined if the URL couldn't be retrieved (timeout reached) or if `wait-for-completion` and `display-worflow-run-url` are both `false`
+
 ### `workflow-conclusion`
 The result of the triggered workflow. May be one of `success`, `failure`, `cancelled`, `timed_out`, `skipped`, `neutral`, `action_required`. The step in your workflow will fail if the triggered workflow completes with `failure`, `cancelled` or `timed_out`. Other workflow conlusion are considered success.
 Only available if `wait-for-completion` is `true`

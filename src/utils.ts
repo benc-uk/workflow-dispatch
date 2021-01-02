@@ -34,6 +34,11 @@ export function getArgs() {
     inputs = JSON.parse(inputsJson);
   }
 
+  const displayWorkflowUrlStr = core.getInput('display-workflow-run-url');
+  const displayWorkflowUrl = displayWorkflowUrlStr && displayWorkflowUrlStr === 'true';
+  const displayWorkflowUrlTimeout = toMilliseconds(core.getInput('display-workflow-run-url-timeout'));
+  const displayWorkflowUrlInterval = toMilliseconds(core.getInput('display-workflow-run-url-interval'));
+
   const waitForCompletionStr = core.getInput('wait-for-completion');
   const waitForCompletion = waitForCompletionStr && waitForCompletionStr === 'true';
   const waitForCompletionTimeout = toMilliseconds(core.getInput('wait-for-completion-timeout'));
@@ -46,6 +51,9 @@ export function getArgs() {
     owner,
     repo,
     inputs,
+    displayWorkflowUrl,
+    displayWorkflowUrlTimeout,
+    displayWorkflowUrlInterval,
     checkStatusInterval,
     waitForCompletion,
     waitForCompletionTimeout

@@ -1,6 +1,6 @@
 {
   "name": "workflow-dispatch-and-wait",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Trigger running GitHub Actions workflows and wait for result",
   "main": "dist/index.js",
   "scripts": {

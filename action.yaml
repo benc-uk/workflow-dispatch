@@ -17,6 +17,18 @@ inputs:
   repo:
     description: 'Repo owner & name, slash separated, only set if invoking a workflow in a different repo'
     required: false
+  display-workflow-run-url:
+    description: 'Get the URL of the triggered workflow and display it in logs (useful to follow the progress of the triggered workflow)'
+    required: false
+    default: true
+  display-workflow-run-url-interval:
+    description: 'The time to wait (+unit) between two polls to get the URL of the workflow run'
+    required: false
+    default: 1m
+  display-workflow-run-url-timeout:
+    description: 'Maximum amount of time (+unit) to wait for the URL of the workflow run. If the timeout is reached, it is just ignored'
+    required: false
+    default: 10m
   wait-for-completion:
     description: 'Block until the triggered workflow has finished'
     required: false
@@ -28,7 +40,7 @@ inputs:
   wait-for-completion-interval:
     description: 'Time to wait (+unit) between two polls to get run status'
     required: false
-    default: 30s
+    default: 1m
 
 runs:
   using: 'node12'
