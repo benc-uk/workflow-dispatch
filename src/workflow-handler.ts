@@ -67,11 +67,10 @@ export class WorkflowHandler {
         ref: this.ref,
         inputs
       });
-
       debug('Workflow Dispatch', dispatchResp);
-
     } catch (error) {
-      core.setFailed(error.message)
+      debug('Workflow Dispatch error', error.message);
+      throw error;
     }
   }
 
@@ -83,7 +82,6 @@ export class WorkflowHandler {
         repo: this.repo,
         run_id: runId
       });
-
       debug('Workflow Run status', response);
 
       return {
@@ -93,6 +91,30 @@ export class WorkflowHandler {
       };
 
     } catch (error) {
+      debug('Workflow Run status error', error);
+      throw error;
+    }
+  }
+
+
+  async getWorkflowRunArtifacts(): Promise<WorkflowRunResult> {
+    try {
+      const runId = await this.getWorkflowRunId();
+      const response = await this.octokit.actions.getWorkflowRunArtifacts({
+        owner: this.owner,
+        repo: this.repo,
+        run_id: runId
+      });
+      debug('Workflow Run artifacts', response);
+
+      return {
+        url: response.data.html_url,
+        status: ofStatus(response.data.status),
+        conclusion: ofConclusion(response.data.conclusion)
+      };
+
+    } catch (error) {
+      debug('Workflow Run artifacts error', error);
       throw error;
     }
   }
@@ -110,12 +132,10 @@ export class WorkflowHandler {
         workflow_id: workflowId,
         event: 'workflow_dispatch'
       });
-
       debug('List Workflow Runs', response);
 
       const runs = response.data.workflow_runs
         .filter((r: any) => new Date(r.created_at).valueOf() >= this.triggerDate);
-
       debug(`Filtered Workflow Runs (after trigger date: ${new Date(this.triggerDate).toISOString()})`, runs.map((r: any) => ({
         id: r.id,
         name: r.name,
@@ -132,6 +152,7 @@ export class WorkflowHandler {
       this.workflowRunId = runs[0].id as number;
       return this.workflowRunId;
     } catch (error) {
+      debug('Get workflow run id error', error);
       throw error;
     }
 
@@ -152,7 +173,6 @@ export class WorkflowHandler {
         repo: this.repo
       });
       const workflows = workflowsResp.data.workflows;
-
       debug(`List Workflows`, workflows);
 
       // Locate workflow either by name or id
@@ -162,7 +182,7 @@ export class WorkflowHandler {
       this.workflowId = workflowFind.id as number;
       return this.workflowId;
     } catch(error) {
-      // core.setFailed(error.message);
+      debug('List workflows error', error);
       throw error;
     }
   }

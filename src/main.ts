@@ -69,7 +69,7 @@ async function run(): Promise<void> {
     const workflowHandler = new WorkflowHandler(args.token, args.workflowRef, args.owner, args.repo, args.ref);
 
     // Trigger workflow run
-    workflowHandler.triggerWorkflow(args.inputs);
+    await workflowHandler.triggerWorkflow(args.inputs);
     core.info(`Workflow triggered 🚀`);
 
     if (args.displayWorkflowUrl) {

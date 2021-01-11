@@ -24,7 +24,9 @@ _This action is a fork of `benc-uk/workflow-dispatch` to add support for waiting
 The solution is to manually create a PAT and store it as a secret e.g. `${{ secrets.PERSONAL_TOKEN }}`
 
 ### `inputs`
-**Optional.** The inputs to pass to the workflow (if any are configured), this must be a JSON encoded string, e.g. `{ "myInput": "foobar" }`
+**Optional.** The inputs to pass to the workflow (if any are configured), this must be a JSON encoded string, e.g. `{ "myInput": "foobar" }`.
+
+All values must be strings (even if they are used as booleans or numbers in the triggered workflow). The triggered workflow should use `fromJson` function to get the right type
 
 ### `ref`
 **Optional.** The Git reference used with the triggered workflow run. The reference can be a branch, tag, or a commit SHA. If omitted the context ref of the triggering workflow is used. If you want to trigger on pull requests and run the target workflow in the context of the pull request branch, set the ref to `${{ github.event.pull_request.head.ref }}`

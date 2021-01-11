@@ -5912,7 +5912,7 @@ function run() {
             const args = utils_1.getArgs();
             const workflowHandler = new workflow_handler_1.WorkflowHandler(args.token, args.workflowRef, args.owner, args.repo, args.ref);
             // Trigger workflow run
-            workflowHandler.triggerWorkflow(args.inputs);
+            yield workflowHandler.triggerWorkflow(args.inputs);
             core.info(`Workflow triggered 🚀`);
             if (args.displayWorkflowUrl) {
                 const url = yield getFollowUrl(workflowHandler, args.displayWorkflowUrlInterval, args.displayWorkflowUrlTimeout);
@@ -6147,7 +6147,8 @@ class WorkflowHandler {
                 debug_1.debug('Workflow Dispatch', dispatchResp);
             }
             catch (error) {
-                core.setFailed(error.message);
+                debug_1.debug('Workflow Dispatch error', error.message);
+                throw error;
             }
         });
     }
@@ -6168,6 +6169,29 @@ class WorkflowHandler {
                 };
             }
             catch (error) {
+                debug_1.debug('Workflow Run status error', error);
+                throw error;
+            }
+        });
+    }
+    getWorkflowRunArtifacts() {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const runId = yield this.getWorkflowRunId();
+                const response = yield this.octokit.actions.getWorkflowRunArtifacts({
+                    owner: this.owner,
+                    repo: this.repo,
+                    run_id: runId
+                });
+                debug_1.debug('Workflow Run artifacts', response);
+                return {
+                    url: response.data.html_url,
+                    status: ofStatus(response.data.status),
+                    conclusion: ofConclusion(response.data.conclusion)
+                };
+            }
+            catch (error) {
+                debug_1.debug('Workflow Run artifacts error', error);
                 throw error;
             }
         });
@@ -6204,6 +6228,7 @@ class WorkflowHandler {
                 return this.workflowRunId;
             }
             catch (error) {
+                debug_1.debug('Get workflow run id error', error);
                 throw error;
             }
         });
@@ -6234,7 +6259,7 @@ class WorkflowHandler {
                 return this.workflowId;
             }
             catch (error) {
-                // core.setFailed(error.message);
+                debug_1.debug('List workflows error', error);
                 throw error;
             }
         });
