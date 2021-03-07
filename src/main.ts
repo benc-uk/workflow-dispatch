@@ -8,6 +8,7 @@
 import * as core from '@actions/core'
 import * as github from '@actions/github'
 import { ActionsGetWorkflowResponseData } from '@octokit/types'
+import { parse as parseInputs } from './inputs'
 
 //
 // Main task function (async wrapper)
@@ -23,12 +24,9 @@ async function run(): Promise<void> {
       ? core.getInput('repo').split('/')
       : [github.context.repo.owner, github.context.repo.repo]
 
-    // Decode inputs, this MUST be a valid JSON string
-    let inputs = {}
-    const inputsJson = core.getInput('inputs')
-    if(inputsJson) {
-      inputs = JSON.parse(inputsJson)
-    }
+    const inputs = parseInputs(
+      core.getInput('inputs')
+    )
 
     // Get octokit client for making API calls
     const octokit = github.getOctokit(token)
