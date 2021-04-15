@@ -19,6 +19,7 @@ async function run(): Promise<void> {
     const workflowRef = core.getInput('workflow')
     // Optional inputs, with defaults
     const ref = core.getInput('ref')   || github.context.ref
+    const sha = core.getInput('sha') || null
     const [owner, repo] = core.getInput('repo')
       ? core.getInput('repo').split('/')
       : [github.context.repo.owner, github.context.repo.repo]
@@ -47,6 +48,14 @@ async function run(): Promise<void> {
     if(!workflowFind) throw new Error(`Unable to find workflow '${workflowRef}' in ${owner}/${repo} 😥`)
     console.log(`Workflow id is: ${workflowFind.id}`)
 
+    if (sha) {
+      const { data: refObj } = await octokit.request('GET /repos/{owner}/{repo}/git/' + ref.replace(/^refs\//, 'ref/'), {
+        owner,
+        repo,
+      });
+      if (refObj.object.sha != sha) throw new Error(`'${refObj.ref}' references '${refObj.object.sha}', rather than '${sha}'`);
+    }
+
     // Call workflow_dispatch API
     const dispatchResp = await octokit.request(`POST /repos/${owner}/${repo}/actions/workflows/${workflowFind.id}/dispatches`, {
       ref: ref,
@@ -54,6 +63,7 @@ async function run(): Promise<void> {
     })
     core.info(`API response status: ${dispatchResp.status} 🚀`)
   } catch (error) {
+    console.debug(JSON.stringify(error, null, 3));
     core.setFailed(error.message)
   }
 }

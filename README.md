@@ -27,6 +27,9 @@ The solution is to manually create a PAT and store it as a secret e.g. `${{ secr
 ### `ref`
 **Optional.** The Git reference used with the triggered workflow run. The reference can be a branch, or a tag. If omitted the context ref of the triggering workflow is used. If you want to trigger on pull requests and run the target workflow in the context of the pull request branch, set the ref to `${{ github.event.pull_request.head.ref }}`
 
+### `sha`
+**Optional.** The SHA of the object you expect `ref` to reference. If set, and the SHA doesn't match, the action will fail. For this to work you need to use the full `refs/{heads,tags}/<ref>` syntax for `ref`.
+
 ### `repo`
 **Optional.** The default behavior is to trigger workflows in the same repo as the triggering workflow, if you wish to trigger in another GitHub repo "externally", then provide the owner + repo name with slash between them e.g. `microsoft/vscode`
 
