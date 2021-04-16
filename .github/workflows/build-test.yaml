@@ -37,6 +37,27 @@ jobs:
         token: ${{ secrets.PERSONAL_TOKEN }}
         inputs: '{"message": "Mango jam"}'
 
+    - name: Invoke workflow for SHA
+      uses: ./
+      with:
+        workflow: Message Echo 1
+        token: ${{ secrets.PERSONAL_TOKEN }}
+        sha: ${{ github.sha }}
+        inputs: '{"message": "SHA dispatch"}'
+
+    - name: Error out invoking workflow by mismatched ref/SHA
+      id: sha-invoke-error
+      uses: ./
+      with:
+        workflow: Message Echo 1
+        token: ${{ secrets.PERSONAL_TOKEN }}
+        sha: "bad"
+      continue-on-error: true
+
+    - name: Check that mismatched ref/SHA errored out
+      run: |
+        [ ${{ steps.sha-invoke-error.outcome }} == "failure" ]
+
     - name: Update repo with build
       uses: mikeal/publish-to-github-action@master
       env:
