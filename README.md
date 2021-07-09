@@ -32,7 +32,7 @@ The solution is to manually create a PAT and store it as a secret e.g. `${{ secr
 
 
 ## Outputs
-None
+This Action emits a single output named workflowId.
 
 
 ## Example usage
