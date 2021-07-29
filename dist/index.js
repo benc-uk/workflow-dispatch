@@ -566,7 +566,9 @@ function run() {
             core.debug(JSON.stringify(workflows, null, 3));
             core.debug('### END:  List Workflows response data');
             // Locate workflow either by name or id
-            const workflowFind = workflows.find((workflow) => workflow.name === workflowRef || workflow.id.toString() === workflowRef);
+            const workflowFind = workflows.find((workflow) => (workflow.name === workflowRef
+                || workflow.id.toString() === workflowRef
+                || workflow.path === workflowRef));
             if (!workflowFind)
                 throw new Error(`Unable to find workflow '${workflowRef}' in ${owner}/${repo} 😥`);
             console.log(`Workflow id is: ${workflowFind.id}`);

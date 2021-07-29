@@ -54,6 +54,15 @@ None
 ```
 
 ```yaml
+- name: Invoke workflow with inputs
+  uses: benc-uk/workflow-dispatch@v1
+  with:
+    workflow: .github/workflows/example.yml
+    token: ${{ secrets.PERSONAL_TOKEN }}
+    inputs: '{ "message": "blah blah", "debug": true }'
+```
+
+```yaml
 - name: Invoke workflow in another repo with inputs
   uses: benc-uk/workflow-dispatch@v1
   with:
