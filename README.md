@@ -13,7 +13,7 @@ For details of the `workflow_dispatch` even see [this blog post introducing this
 
 ## Inputs
 ### `workflow`
-**Required.** The name or ID of the workflow to trigger and run. This is the name declared in the YAML, not the filename
+**Required.** The name (as declared in the YAML), ID (as returned by the Github API) or path of the workflow (e.g. `.github/workflows/ci.yml`) to trigger and run.
 
 ### `token`
 

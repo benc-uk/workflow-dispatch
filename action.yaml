@@ -3,7 +3,7 @@ description: 'Trigger and chain GitHub Actions workflows with workflow_dispatch 
 
 inputs:
   workflow: 
-    description: 'Name or ID of workflow to run'
+    description: 'Name, ID or path of workflow to run'
     required: true
   token: 
     description: 'GitHub token with repo write access, can NOT use secrets.GITHUB_TOKEN, see readme'
