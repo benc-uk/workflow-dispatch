@@ -14,7 +14,7 @@
   "author": "Ben Coleman",
   "license": "MIT",
   "devDependencies": {
-    "@actions/core": "^1.2.4",
+    "@actions/core": "^1.9.1",
     "@actions/github": "^4.0.0",
     "@zeit/ncc": "^0.22.3",
     "@typescript-eslint/eslint-plugin": "^3.5.0",
