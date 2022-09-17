@@ -17,9 +17,7 @@ For details of the `workflow_dispatch` even see [this blog post introducing this
 
 ### `token`
 
-**Required.** A GitHub access token (PAT) with write access to the repo in question. **NOTE.** The automatically provided token e.g. `${{ secrets.GITHUB_TOKEN }}` can not be used, GitHub prevents this token from being able to fire the  `workflow_dispatch` and `repository_dispatch` event. [The reasons are explained in the docs](https://docs.github.com/en/actions/reference/events-that-trigger-workflows#triggering-new-workflows-using-a-personal-access-token).  
-
-The solution is to manually create a PAT and store it as a secret e.g. `${{ secrets.PERSONAL_TOKEN }}`
+**Optional.** Repository `GITHUB_TOKEN` or personal access token (PAT) secret. Defaults to [`github.token`](https://docs.github.com/en/actions/learn-github-actions/contexts#github-context).
 
 ### `inputs`
 **Optional.** The inputs to pass to the workflow (if any are configured), this must be a JSON encoded string, e.g. `{ "myInput": "foobar" }`
@@ -41,7 +39,6 @@ None
   uses: benc-uk/workflow-dispatch@v1
   with:
     workflow: My Workflow
-    token: ${{ secrets.PERSONAL_TOKEN }}
 ```
 
 ```yaml
@@ -49,7 +46,6 @@ None
   uses: benc-uk/workflow-dispatch@v1
   with:
     workflow: Another Workflow
-    token: ${{ secrets.PERSONAL_TOKEN }}
     inputs: '{ "message": "blah blah", "debug": true }'
 ```
 
@@ -59,6 +55,5 @@ None
   with:
     workflow: Some Workflow
     repo: benc-uk/example
-    token: ${{ secrets.PERSONAL_TOKEN }}
     inputs: '{ "message": "blah blah", "debug": true }'
 ```

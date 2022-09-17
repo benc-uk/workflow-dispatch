@@ -6,8 +6,9 @@ inputs:
     description: 'Name or ID of workflow to run'
     required: true
   token: 
-    description: 'GitHub token with repo write access, can NOT use secrets.GITHUB_TOKEN, see readme'
-    required: true
+    description: 'Repository GITHUB_TOKEN or personal access token (PAT) secret'
+    required: false
+    default: ${{ github.token }}
   inputs:
     description: 'Inputs to pass to the workflow, must be a JSON string'
     required: false
