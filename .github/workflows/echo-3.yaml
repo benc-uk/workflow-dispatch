@@ -1,5 +1,7 @@
 name: Message Echo 3
 
+# A version using workflow_call for investigation purposes
+
 on: 
   workflow_call:
     inputs:
