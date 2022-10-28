@@ -6206,7 +6206,7 @@ exports.default = _default;
 /***/ 731:
 /***/ (function(module) {
 
-module.exports = {"name":"workflow-dispatch","version":"1.2.0","description":"Trigger running GitHub Actions workflows","main":"dist/index.js","scripts":{"build":"ncc build src/main.ts -o dist","lint":"eslint src/"},"keywords":["github","actions"],"author":"Ben Coleman","license":"MIT","devDependencies":{"@actions/core":"^1.10.0","@actions/github":"^5.1.1","@zeit/ncc":"^0.22.3","@typescript-eslint/eslint-plugin":"^5.41.0","@typescript-eslint/parser":"^5.41.0","eslint":"^8.26.0","typescript":"^4.8.4"}};
+module.exports = {"name":"workflow-dispatch","version":"1.2.1","description":"Trigger running GitHub Actions workflows","main":"dist/index.js","scripts":{"build":"ncc build src/main.ts -o dist","lint":"eslint src/"},"keywords":["github","actions"],"author":"Ben Coleman","license":"MIT","devDependencies":{"@actions/core":"^1.10.0","@actions/github":"^5.1.1","@zeit/ncc":"^0.22.3","@typescript-eslint/eslint-plugin":"^5.41.0","@typescript-eslint/parser":"^5.41.0","eslint":"^8.26.0","typescript":"^4.8.4"}};
 
 /***/ }),
 

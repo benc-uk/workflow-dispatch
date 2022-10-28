@@ -1,6 +1,6 @@
 {
   "name": "workflow-dispatch",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Trigger running GitHub Actions workflows",
   "main": "dist/index.js",
   "scripts": {
