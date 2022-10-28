@@ -13,4 +13,4 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Echo message
-        run: echo '${{ github.event.inputs.message }}'
+        run: echo '${{ inputs.message }}'
