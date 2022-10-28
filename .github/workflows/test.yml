@@ -1,0 +1,15 @@
+name: Tester
+
+on: 
+  workflow_dispatch:
+
+jobs:
+  calls:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Invoke echo 1 workflow using this action
+      uses: ./
+      with:
+        workflow: Message Echo 1
+        token: ${{ secrets.PERSONAL_TOKEN }}
+        inputs: '{"message": "blah blah"}'   
