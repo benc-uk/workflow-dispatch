@@ -19,7 +19,7 @@ type Workflow = {
 // Main task function (async wrapper)
 //
 async function run(): Promise<void> {
-  core.info(`Workflow Dispatch Action v${PackageJSON.version}`)
+  core.info(`🏃 Workflow Dispatch Action v${PackageJSON.version}`)
   try {
     // Required inputs
     const token = core.getInput('token')
@@ -60,18 +60,25 @@ async function run(): Promise<void> {
 
     if(!foundWorkflow) throw new Error(`Unable to find workflow '${workflowRef}' in ${owner}/${repo} 😥`)
 
-    console.log(`Workflow id is: ${foundWorkflow.id}`)
+    console.log(`🔎 Found workflow, id: ${foundWorkflow.id}, name: ${foundWorkflow.name}, path: ${foundWorkflow.path}`)
 
     // Call workflow_dispatch API
+    console.log('🚀 Calling GitHub API to dispatch workflow...')
     const dispatchResp = await octokit.request(`POST /repos/${owner}/${repo}/actions/workflows/${foundWorkflow.id}/dispatches`, {
       ref: ref,
       inputs: inputs
     })
 
-    core.info(`API response status: ${dispatchResp.status} 🚀`)
+    core.info(`🏆 API response status: ${dispatchResp.status}`)
     core.setOutput('workflowId', foundWorkflow.id)
   } catch (error) {
     const e = error as Error
+
+    if(e.message.endsWith('a disabled workflow')){
+      core.warning('Workflow is disabled, no action was taken')
+      return
+    }
+
     core.setFailed(e.message)
   }
 }
