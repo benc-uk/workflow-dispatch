@@ -7,7 +7,11 @@
 
 import * as core from '@actions/core'
 import * as github from '@actions/github'
-import { ActionsGetWorkflowResponseData } from '@octokit/types'
+
+type Workflow = {
+  id: number
+  name: string
+}
 
 //
 // Main task function (async wrapper)
@@ -32,10 +36,11 @@ async function run(): Promise<void> {
 
     // Get octokit client for making API calls
     const octokit = github.getOctokit(token)
+    octokit.graphql
 
     // List workflows via API, and handle paginated results
-    const workflows: ActionsGetWorkflowResponseData[] =
-      await octokit.paginate(octokit.actions.listRepoWorkflows.endpoint.merge({ owner, repo, ref, inputs }))
+    const workflows: Workflow[] =
+      await octokit.paginate(octokit.rest.actions.listRepoWorkflows.endpoint.merge({ owner, repo, ref, inputs }))
 
     // Debug response if ACTIONS_STEP_DEBUG is enabled
     core.debug('### START List Workflows response data')
@@ -52,9 +57,12 @@ async function run(): Promise<void> {
       ref: ref,
       inputs: inputs
     })
+
+
     core.info(`API response status: ${dispatchResp.status} 🚀`)
   } catch (error) {
-    core.setFailed(error.message)
+    const e = error as Error
+    core.setFailed(e.message)
   }
 }
 
