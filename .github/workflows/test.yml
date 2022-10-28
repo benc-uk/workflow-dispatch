@@ -8,8 +8,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - name: Invoke echo 1 workflow using this action
+    - name: Invoke echo 1
       uses: ./
       with:
         workflow: echo-1.yaml
         inputs: '{"message": "blah blah this is a test"}'   
+    - name: Invoke echo 2
+      uses: ./
+      with:
+        workflow: Message Echo 2
+        inputs: '{"message": "mushrooms in the morning"}'           

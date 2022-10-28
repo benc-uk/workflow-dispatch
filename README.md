@@ -13,11 +13,15 @@ For details of the `workflow_dispatch` even see [this blog post introducing this
 
 ## Inputs
 ### `workflow`
-**Required.** The name, filename or ID of the workflow to be triggered and run. All three possibilities are checked when looking for the workflow
+**Required.** The name, filename or ID of the workflow to be triggered and run. All three possibilities are used when looking for the workflow. e.g.
 
-### `token`
-
-**Optional.** By default the standard `github.token` will be used and you no longer need to provide a token here. It is left for backwards compatibility only, or in the rare case you want to provide your own token.
+```yaml
+workflow: My Workflow
+# or
+workflow: my-workflow.yaml
+# or
+workflow: 1218419
+```
 
 ### `inputs`
 **Optional.** The inputs to pass to the workflow (if any are configured), this must be a JSON encoded string, e.g. `{ "myInput": "foobar" }`
@@ -28,9 +32,12 @@ For details of the `workflow_dispatch` even see [this blog post introducing this
 ### `repo`
 **Optional.** The default behavior is to trigger workflows in the same repo as the triggering workflow, if you wish to trigger in another GitHub repo "externally", then provide the owner + repo name with slash between them e.g. `microsoft/vscode`
 
+### `token`
+**Optional.** By default the standard `github.token` will be used and you no longer need to provide your own token here. It is left for backwards compatibility only, or in the rare case you want to provide your own token.
+
 
 ## Outputs
-None
+This Action emits a single output named `workflowId`.
 
 
 ## Example usage
@@ -46,14 +53,14 @@ None
   uses: benc-uk/workflow-dispatch@v1
   with:
     workflow: Another Workflow
-    inputs: '{ "message": "blah blah", "debug": true }'
+    inputs: '{ "message": "blah blah", "something": true }'
 ```
 
 ```yaml
 - name: Invoke workflow in another repo with inputs
   uses: benc-uk/workflow-dispatch@v1
   with:
-    workflow: Some Workflow
+    workflow: my-workflow.yaml
     repo: benc-uk/example
-    inputs: '{ "message": "blah blah", "debug": true }'
+    inputs: '{ "message": "blah blah", "something": false }'
 ```
