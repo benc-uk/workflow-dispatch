@@ -564,7 +564,7 @@ const PackageJSON = __importStar(__webpack_require__(731));
 //
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
-        core.info(`!!!!Workflow Dispatch Action v${PackageJSON.version}`);
+        core.info(`Workflow Dispatch Action v${PackageJSON.version}`);
         try {
             // Required inputs
             const token = core.getInput('token');
