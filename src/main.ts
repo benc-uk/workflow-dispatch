@@ -19,7 +19,7 @@ type Workflow = {
 // Main task function (async wrapper)
 //
 async function run(): Promise<void> {
-  core.info(`!!!!Workflow Dispatch Action v${PackageJSON.version}`)
+  core.info(`Workflow Dispatch Action v${PackageJSON.version}`)
   try {
     // Required inputs
     const token = core.getInput('token')
