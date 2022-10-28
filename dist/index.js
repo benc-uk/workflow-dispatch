@@ -567,10 +567,10 @@ function run() {
         core.info(`🏃 Workflow Dispatch Action v${PackageJSON.version}`);
         try {
             // Required inputs
-            const token = core.getInput('token');
             const workflowRef = core.getInput('workflow');
             // Optional inputs, with defaults
-            const ref = core.getInput('ref') || github.context.ref;
+            const token = core.getInput('token');
+            const ref = core.getInput('ref');
             const [owner, repo] = core.getInput('repo')
                 ? core.getInput('repo').split('/')
                 : [github.context.repo.owner, github.context.repo.repo];
@@ -582,7 +582,6 @@ function run() {
             }
             // Get octokit client for making API calls
             const octokit = github.getOctokit(token);
-            octokit.graphql;
             // List workflows via API, and handle paginated results
             const workflows = yield octokit.paginate(octokit.rest.actions.listRepoWorkflows.endpoint.merge({ owner, repo, ref, inputs }));
             // Debug response if ACTIONS_STEP_DEBUG is enabled
