@@ -564,7 +564,7 @@ const PackageJSON = __importStar(__webpack_require__(731));
 //
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
-        core.info(`Workflow Dispatch Action v${PackageJSON.version}`);
+        core.info(`🏃 Workflow Dispatch Action v${PackageJSON.version}`);
         try {
             // Required inputs
             const token = core.getInput('token');
@@ -597,19 +597,20 @@ function run() {
             });
             if (!foundWorkflow)
                 throw new Error(`Unable to find workflow '${workflowRef}' in ${owner}/${repo} 😥`);
-            console.log(`Workflow id is: ${foundWorkflow.id}`);
+            console.log(`🔎 Found workflow, id: ${foundWorkflow.id}, name: ${foundWorkflow.name}, path: ${foundWorkflow.path}`);
             // Call workflow_dispatch API
+            console.log('🚀 Calling GitHub API to dispatch workflow...');
             const dispatchResp = yield octokit.request(`POST /repos/${owner}/${repo}/actions/workflows/${foundWorkflow.id}/dispatches`, {
                 ref: ref,
                 inputs: inputs
             });
-            core.info(`API response status: ${dispatchResp.status} 🚀`);
+            core.info(`🏆 API response status: ${dispatchResp.status}`);
             core.setOutput('workflowId', foundWorkflow.id);
         }
         catch (error) {
             const e = error;
             if (e.message.endsWith('a disabled workflow')) {
-                core.warning('WARNING! Workflow is disabled, no action was taken');
+                core.warning('Workflow is disabled, no action was taken');
                 return;
             }
             core.setFailed(e.message);
