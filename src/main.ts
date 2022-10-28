@@ -53,6 +53,7 @@ async function run(): Promise<void> {
       inputs: inputs
     })
     core.info(`API response status: ${dispatchResp.status} 🚀`)
+    core.setOutput('workflowId', workflowFind.id);
   } catch (error) {
     core.setFailed(error.message)
   }
