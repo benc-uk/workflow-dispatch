@@ -27,7 +27,7 @@ jobs:
     - name: Invoke echo 2 workflow using this action
       uses: ./
       with:
-        workflow: Message Echo 2
+        workflow: echo-2.yaml
         token: ${{ secrets.PERSONAL_TOKEN }}
 
     - name: Invoke echo 1 workflow by id
