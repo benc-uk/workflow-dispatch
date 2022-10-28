@@ -3,6 +3,8 @@
 This action triggers another GitHub Actions workflow, using the `workflow_dispatch` event.  
 The workflow must be configured for this event type e.g. `on: [workflow_dispatch]`
 
+**NOTE:** 2022 Update - GitHub now has another way to chain workflows called "callable workflows". See the docs on [reusing workflows](https://docs.github.com/en/actions/using-workflows/reusing-workflows). This is probably the preferred way as it's native to GitHub Actions
+
 This allows you to chain workflows, the classic use case is have a CI build workflow, trigger a CD release/deploy workflow when it completes. Allowing you to maintain separate workflows for CI and CD, and pass data between them as required.
 
 For details of the `workflow_dispatch` even see [this blog post introducing this type of trigger](https://github.blog/changelog/2020-07-06-github-actions-manual-triggers-with-workflow_dispatch/)
@@ -30,10 +32,10 @@ workflow: 1218419
 **Optional.** The Git reference used with the triggered workflow run. The reference can be a branch, tag, or a commit SHA. If omitted the context ref of the triggering workflow is used. If you want to trigger on pull requests and run the target workflow in the context of the pull request branch, set the ref to `${{ github.event.pull_request.head.ref }}`
 
 ### `repo`
-**Optional.** The default behavior is to trigger workflows in the same repo as the triggering workflow, if you wish to trigger in another GitHub repo "externally", then provide the owner + repo name with slash between them e.g. `microsoft/vscode`
+**Optional.** The default behavior is to trigger workflows in the same repo as the triggering workflow, if you wish to trigger in another GitHub repo "externally", then provide the owner + repo name with slash between them e.g. `microsoft/vscode`. When triggering across repos like this, you **must** provide a token (see below), or you will get an error - *"Resource not accessible by integration"*
 
 ### `token`
-**Optional.** By default the standard `github.token` will be used and you no longer need to provide your own token here. It is left for backwards compatibility only, or in the rare case you want to provide your own token.
+**Optional.** By default the standard `github.token`/`GITHUB_TOKEN` will be used and you no longer need to provide your own token here. However when using the `repo` option, you must provide a token here, create a PAT token with repo rights, and pass it here via a secret. This options is also left for backwards compatibility reasons.
 
 
 ## Outputs
