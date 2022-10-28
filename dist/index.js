@@ -558,11 +558,13 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const core = __importStar(__webpack_require__(470));
 const github = __importStar(__webpack_require__(469));
+const PackageJSON = __importStar(__webpack_require__(731));
 //
 // Main task function (async wrapper)
 //
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
+        core.info(`!!!!Workflow Dispatch Action v${PackageJSON.version}`);
         try {
             // Required inputs
             const token = core.getInput('token');
@@ -587,18 +589,21 @@ function run() {
             core.debug('### START List Workflows response data');
             core.debug(JSON.stringify(workflows, null, 3));
             core.debug('### END:  List Workflows response data');
-            // Locate workflow either by name or id
-            const workflowFind = workflows.find((workflow) => workflow.name === workflowRef || workflow.id.toString() === workflowRef);
-            if (!workflowFind)
+            // Locate workflow either by name, id or filename
+            const foundWorkflow = workflows.find((workflow) => {
+                return workflow.name === workflowRef ||
+                    workflow.id.toString() === workflowRef ||
+                    workflow.path.endsWith(workflowRef);
+            });
+            if (!foundWorkflow)
                 throw new Error(`Unable to find workflow '${workflowRef}' in ${owner}/${repo} 😥`);
-            console.log(`!!!Workflow id is: ${workflowFind.id}`);
+            console.log(`Workflow id is: ${foundWorkflow.id}`);
             // Call workflow_dispatch API
-            const dispatchResp = yield octokit.request(`POST /repos/${owner}/${repo}/actions/workflows/${workflowFind.id}/dispatches`, {
+            const dispatchResp = yield octokit.request(`POST /repos/${owner}/${repo}/actions/workflows/${foundWorkflow.id}/dispatches`, {
                 ref: ref,
                 inputs: inputs
             });
-            core.info(`!!!Workflow Dispatch response: ${JSON.stringify(dispatchResp.data)}`);
-            core.info(`!!!API response status: ${dispatchResp.status} 🚀`);
+            core.info(`API response status: ${dispatchResp.status} 🚀`);
         }
         catch (error) {
             const e = error;
@@ -6189,6 +6194,13 @@ function version(uuid) {
 
 var _default = version;
 exports.default = _default;
+
+/***/ }),
+
+/***/ 731:
+/***/ (function(module) {
+
+module.exports = {"name":"workflow-dispatch","version":"1.2.0","description":"Trigger running GitHub Actions workflows","main":"dist/index.js","scripts":{"build":"ncc build src/main.ts -o dist","lint":"eslint src/"},"keywords":["github","actions"],"author":"Ben Coleman","license":"MIT","devDependencies":{"@actions/core":"^1.10.0","@actions/github":"^5.1.1","@zeit/ncc":"^0.22.3","@typescript-eslint/eslint-plugin":"^5.41.0","@typescript-eslint/parser":"^5.41.0","eslint":"^8.26.0","typescript":"^4.8.4"}};
 
 /***/ }),
 
