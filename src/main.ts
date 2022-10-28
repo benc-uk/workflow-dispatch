@@ -72,6 +72,12 @@ async function run(): Promise<void> {
     core.setOutput('workflowId', foundWorkflow.id)
   } catch (error) {
     const e = error as Error
+
+    if(e.message.endsWith('a disabled workflow')){
+      core.warning('WARNING! Workflow is disabled, no action was taken')
+      return
+    }
+
     core.setFailed(e.message)
   }
 }

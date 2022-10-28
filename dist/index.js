@@ -608,6 +608,10 @@ function run() {
         }
         catch (error) {
             const e = error;
+            if (e.message.endsWith('a disabled workflow')) {
+                core.warning('WARNING! Workflow is disabled, no action was taken');
+                return;
+            }
             core.setFailed(e.message);
         }
     });
