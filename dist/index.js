@@ -570,7 +570,7 @@ function run() {
             const workflowRef = core.getInput('workflow');
             // Optional inputs, with defaults
             const token = core.getInput('token');
-            const ref = core.getInput('ref');
+            const ref = core.getInput('ref') || github.context.ref;
             const [owner, repo] = core.getInput('repo')
                 ? core.getInput('repo').split('/')
                 : [github.context.repo.owner, github.context.repo.repo];
