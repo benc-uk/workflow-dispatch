@@ -7,6 +7,9 @@
 
 import * as core from '@actions/core'
 import * as github from '@actions/github'
+import * as githubUtils from '@actions/github/lib/utils'
+import * as retry from '@octokit/plugin-retry'
+import * as throttling from '@octokit/plugin-throttling'
 import * as PackageJSON from '../package.json'
 
 type Workflow = {
@@ -39,7 +42,8 @@ async function run(): Promise<void> {
     }
 
     // Get octokit client for making API calls
-    const octokit = github.getOctokit(token)
+    const Octokit = githubUtils.GitHub.plugin(retry.retry, throttling.throttling)
+    const octokit = new Octokit(githubUtils.getOctokitOptions(token))
 
     // List workflows via API, and handle paginated results
     const workflows: Workflow[] = await octokit.paginate(

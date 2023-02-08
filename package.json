@@ -13,6 +13,10 @@
   ],
   "author": "Ben Coleman",
   "license": "MIT",
+  "dependencies": {
+    "@octokit/plugin-retry": "^4.1.1",
+    "@octokit/plugin-throttling": "^5.0.1"
+  },
   "devDependencies": {
     "@actions/core": "^1.10.0",
     "@actions/github": "^5.1.1",
