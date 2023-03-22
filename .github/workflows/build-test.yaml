@@ -46,7 +46,7 @@ jobs:
       uses: ./
       with:
         workflow: Message Echo 1
-        token: ${{ secrets.PERSONAL_TOKEN }}
+        token: ${{ secrets.BROADBOT_TOKEN }}
         inputs: '{"message": "blah blah"}'
         wait-for-completion: false
 
@@ -66,16 +66,8 @@ jobs:
       uses: ./
       with:
         workflow: echo-2.yaml
-        token: ${{ secrets.PERSONAL_TOKEN }}
+        token: ${{ secrets.BROADBOT_TOKEN }}
         wait-for-completion: false
-
-    # - name: Invoke echo 1 workflow by id
-    #   uses: ./
-    #   with:
-    #     workflow: '1854247'
-    #     token: ${{ secrets.PERSONAL_TOKEN }}
-    #     inputs: '{"message": "Mango jam"}'
-    #     wait-for-completion: false
 
   long-running-test:
     needs: [build]
@@ -94,7 +86,7 @@ jobs:
       uses: ./
       with:
         workflow: long-running.yml
-        token: ${{ secrets.PERSONAL_TOKEN }}
+        token: ${{ secrets.BROADBOT_TOKEN }}
         wait-for-completion-interval: 10s
         wait-for-completion-timeout: 5m
       continue-on-error: true
@@ -124,7 +116,7 @@ jobs:
       uses: ./
       with:
         workflow: failing.yml
-        token: ${{ secrets.PERSONAL_TOKEN }}
+        token: ${{ secrets.BROADBOT_TOKEN }}
         wait-for-completion-interval: 10s
         wait-for-completion-timeout: 5m
       continue-on-error: true
@@ -155,7 +147,7 @@ jobs:
       uses: ./
       with:
         workflow: timeout.yml
-        token: ${{ secrets.PERSONAL_TOKEN }}
+        token: ${{ secrets.BROADBOT_TOKEN }}
         wait-for-completion-interval: 10s
         wait-for-completion-timeout: 30s
       continue-on-error: true
@@ -167,28 +159,3 @@ jobs:
       with:
         expected: failure
         actual: ${{ steps.timeout-workflow.outcome }}
-
-    # - name: Invoke external workflow using this action
-    #   uses: ./
-    #   with:
-    #     workflow: Deploy To Kubernetes           
-    #     repo: benc-uk/dapr-store
-    #     token: ${{ secrets.PERSONAL_TOKEN }}
-    #     ref: master 
-
-  deploy:
-    needs: [echo-1-test, echo-2-test, long-running-test, failing-test, timeout-test]
-    runs-on: ubuntu-latest
-    steps:
-    - name: Check out repository
-      uses: actions/checkout@v2
-    - name: Download dist
-      uses: actions/download-artifact@v2
-      with:
-        name: build
-        path: dist
-    - name: Update repo with build
-      uses: mikeal/publish-to-github-action@master
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
