@@ -67,7 +67,7 @@ jobs:
        uses: ./
        with:
          ref: ${{ github.event.pull_request.head.ref }}
-         workflow: echo-2.yaml
+         workflow: echo-02.yaml
          token: ${{ secrets.BROADBOT_TOKEN }}
          wait-for-completion: false
 
