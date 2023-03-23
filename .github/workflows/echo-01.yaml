@@ -11,6 +11,9 @@ on:
 jobs:
   echo:
     runs-on: ubuntu-latest
+    environment:
+      name: foo
+      url: www.google.com
     steps:
       - name: Echo message
         run: echo '${{ github.event.inputs.message }}'

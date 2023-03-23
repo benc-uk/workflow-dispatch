@@ -1,7 +1,7 @@
 {
-  "name": "workflow-dispatch",
-  "version": "1.1.0",
-  "description": "Trigger running GitHub Actions workflows",
+  "name": "workflow-dispatch-and-wait",
+  "version": "2.1.1",
+  "description": "Trigger running GitHub Actions workflows and wait for result",
   "main": "dist/index.js",
   "scripts": {
     "build": "ncc build src/main.ts -o dist",
@@ -9,17 +9,19 @@
   },
   "keywords": [
     "github",
-    "actions"
+    "actions",
+    "worflow",
+    "trigger"
   ],
-  "author": "Ben Coleman",
+  "author": "Aurélien Baudet",
   "license": "MIT",
   "devDependencies": {
-    "@actions/core": "^1.2.4",
-    "@actions/github": "^4.0.0",
-    "@zeit/ncc": "^0.22.3",
-    "@typescript-eslint/eslint-plugin": "^3.5.0",
-    "@typescript-eslint/parser": "^3.5.0",
-    "eslint": "^7.4.0",
-    "typescript": "^3.9.6"
+    "@actions/core": "1.2.6",
+    "@actions/github": "4.0.0",
+    "@vercel/ncc": "0.26.1",
+    "@typescript-eslint/eslint-plugin": "3.5.0",
+    "@typescript-eslint/parser": "3.5.0",
+    "eslint": "7.4.0",
+    "typescript": "3.9.6"
   }
 }
