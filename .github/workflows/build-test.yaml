@@ -93,6 +93,7 @@ jobs:
       id: long-running-workflow
       uses: ./
       with:
+        ref: ${{ github.event.pull_request.head.ref }}
         workflow: long-running.yml
         token: ${{ secrets.BROADBOT_TOKEN }}
         wait-for-completion-interval: 10s
