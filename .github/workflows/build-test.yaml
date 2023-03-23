@@ -37,10 +37,10 @@ jobs:
         token: ${{ secrets.PERSONAL_TOKEN }}
         inputs: '{"message": "Mango jam"}'
 
-    - name: Update repo with build
-      uses: mikeal/publish-to-github-action@master
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    # - name: Update repo with build
+    #   uses: mikeal/publish-to-github-action@master
+    #   env:
+    #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     # - name: Invoke external workflow using this action
     #   uses: ./
