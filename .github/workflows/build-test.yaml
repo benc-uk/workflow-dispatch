@@ -15,8 +15,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Check out repository
-      uses: actions/checkout@v2
-    - uses: actions/setup-node@v2
+      uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
       with:
         node-version: '12'
     - name: Build with ncc
@@ -25,59 +25,61 @@ jobs:
         yarn install
         yarn run build
     - name: Archive dist
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: build
         path: dist
 
   echo-1-test:
-    needs: [build]
-    runs-on: ubuntu-latest
-    name: "echo-1-test [trigger|by workflow name]"
-    steps:
-    - name: Check out repository
-      uses: actions/checkout@v2
-    - name: Download dist
-      uses: actions/download-artifact@v2
-      with:
-        name: build
-        path: dist
-    - name: Invoke echo 1 workflow using this action (do not wait for completion)
-      uses: ./
-      with:
-        workflow: Message Echo 1
-        token: ${{ secrets.BROADBOT_TOKEN }}
-        inputs: '{"message": "blah blah"}'
-        wait-for-completion: false
-
+     needs: [build]
+     runs-on: ubuntu-latest
+     name: "echo-1-test [trigger|by workflow name]"
+     steps:
+     - name: Check out repository
+       uses: actions/checkout@v2
+     - name: Download dist
+       uses: actions/download-artifact@v2
+       with:
+         name: build
+         path: dist
+     - name: Invoke echo 1 workflow using this action (do not wait for completion)
+       uses: ./
+       with:
+         ref: ${{ github.event.pull_request.head.ref }}
+         workflow: Message Echo 1
+         token: ${{ secrets.BROADBOT_TOKEN }}
+         inputs: '{"message": "blah blah"}'
+         wait-for-completion: false
+ 
   echo-2-test:
-    needs: [build]
-    runs-on: ubuntu-latest
-    name: "echo-2-test [trigger|by workflow filename]"
-    steps:
-    - name: Check out repository
-      uses: actions/checkout@v2
-    - name: Download dist
-      uses: actions/download-artifact@v2
-      with:
-        name: build
-        path: dist
-    - name: Invoke echo 2 workflow using this action
-      uses: ./
-      with:
-        workflow: echo-2.yaml
-        token: ${{ secrets.BROADBOT_TOKEN }}
-        wait-for-completion: false
-
+     needs: [build]
+     runs-on: ubuntu-latest
+     name: "echo-2-test [trigger|by workflow filename]"
+     steps:
+     - name: Check out repository
+       uses: actions/checkout@v2
+     - name: Download dist
+       uses: actions/download-artifact@v2
+       with:
+         name: build
+         path: dist
+     - name: Invoke echo 2 workflow using this action
+       uses: ./
+       with:
+         ref: ${{ github.event.pull_request.head.ref }}
+         workflow: echo-02.yaml
+         token: ${{ secrets.BROADBOT_TOKEN }}
+         wait-for-completion: false
+         
   long-running-test:
     needs: [build]
     runs-on: ubuntu-latest
     name: "long-running-test [trigger+wait|by workflow filename|shoud succeed]"
     steps:
     - name: Check out repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
     - name: Download dist
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v3
       with:
         name: build
         path: dist
@@ -85,6 +87,7 @@ jobs:
       id: long-running-workflow
       uses: ./
       with:
+        ref: ${{ github.event.pull_request.head.ref }}
         workflow: long-running.yml
         token: ${{ secrets.BROADBOT_TOKEN }}
         wait-for-completion-interval: 10s
@@ -115,6 +118,7 @@ jobs:
       id: failing-workflow
       uses: ./
       with:
+        ref: ${{ github.event.pull_request.head.ref }}
         workflow: failing.yml
         token: ${{ secrets.BROADBOT_TOKEN }}
         wait-for-completion-interval: 10s
@@ -146,6 +150,7 @@ jobs:
       id: timeout-workflow
       uses: ./
       with:
+        ref: ${{ github.event.pull_request.head.ref }}
         workflow: timeout.yml
         token: ${{ secrets.BROADBOT_TOKEN }}
         wait-for-completion-interval: 10s
