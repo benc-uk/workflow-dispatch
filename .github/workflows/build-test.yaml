@@ -15,8 +15,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Check out repository
-      uses: actions/checkout@v2
-    - uses: actions/setup-node@v2
+      uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
       with:
         node-version: '12'
     - name: Build with ncc
@@ -25,7 +25,7 @@ jobs:
         yarn install
         yarn run build
     - name: Archive dist
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: build
         path: dist
@@ -83,9 +83,9 @@ jobs:
     name: "long-running-test [trigger+wait|by workflow filename|shoud succeed]"
     steps:
     - name: Check out repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
     - name: Download dist
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v3
       with:
         name: build
         path: dist
