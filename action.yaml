@@ -43,7 +43,7 @@ inputs:
     default: 1m
 
 runs:
-  using: 'node12'
+  using: 'node16'
   main: 'dist/index.js'
 
 branding:
