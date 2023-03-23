@@ -30,7 +30,7 @@ jobs:
         name: build
         path: dist
 
-   echo-1-test:
+  echo-1-test:
      needs: [build]
      runs-on: ubuntu-latest
      name: "echo-1-test [trigger|by workflow name]"
@@ -51,7 +51,7 @@ jobs:
          inputs: '{"message": "blah blah"}'
          wait-for-completion: false
  
-   echo-2-test:
+  echo-2-test:
      needs: [build]
      runs-on: ubuntu-latest
      name: "echo-2-test [trigger|by workflow filename]"
