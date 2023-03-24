@@ -9808,7 +9808,8 @@ class WorkflowHandler {
             try {
                 const workflowsResp = yield this.octokit.rest.actions.listRepoWorkflows({
                     owner: this.owner,
-                    repo: this.repo
+                    repo: this.repo,
+                    per_page: 100 //max allowed
                 });
                 const workflows = workflowsResp.data.workflows;
                 debug_1.debug(`List Workflows`, workflows);
