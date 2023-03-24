@@ -18,7 +18,7 @@ jobs:
       uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: '12'
+        node-version: '16'
     - name: Build with ncc
       run: |
         npm install -g yarn
@@ -70,15 +70,7 @@ jobs:
          workflow: echo-02.yaml
          token: ${{ secrets.BROADBOT_TOKEN }}
          wait-for-completion: false
-
-    # - name: Invoke echo 1 workflow by id
-    #   uses: ./
-    #   with:
-    #     workflow: '1854247'
-    #     token: ${{ secrets.BROADBOT_TOKEN }}
-    #     inputs: '{"message": "Mango jam"}'
-    #     wait-for-completion: false
-
+         
   long-running-test:
     needs: [build]
     runs-on: ubuntu-latest
@@ -172,11 +164,3 @@ jobs:
       with:
         expected: failure
         actual: ${{ steps.timeout-workflow.outcome }}
-
-    # - name: Invoke external workflow using this action
-    #   uses: ./
-    #   with:
-    #     workflow: Deploy To Kubernetes           
-    #     repo: benc-uk/dapr-store
-    #     token: ${{ secrets.BROADBOT_TOKEN }}
-    #     ref: master 

@@ -60,7 +60,7 @@ export class WorkflowHandler {
     try {
       const workflowId = await this.getWorkflowId();
       this.triggerDate = Date.now();
-      const dispatchResp = await this.octokit.actions.createWorkflowDispatch({
+      const dispatchResp = await this.octokit.rest.actions.createWorkflowDispatch({
         owner: this.owner,
         repo: this.repo,
         workflow_id: workflowId,
@@ -77,7 +77,7 @@ export class WorkflowHandler {
   async getWorkflowRunStatus(): Promise<WorkflowRunResult> {
     try {
       const runId = await this.getWorkflowRunId();
-      const response = await this.octokit.actions.getWorkflowRun({
+      const response = await this.octokit.rest.actions.getWorkflowRun({
         owner: this.owner,
         repo: this.repo,
         run_id: runId
@@ -100,7 +100,7 @@ export class WorkflowHandler {
   async getWorkflowRunArtifacts(): Promise<WorkflowRunResult> {
     try {
       const runId = await this.getWorkflowRunId();
-      const response = await this.octokit.actions.getWorkflowRunArtifacts({
+      const response = await this.octokit.rest.actions.getWorkflowRunArtifacts({
         owner: this.owner,
         repo: this.repo,
         run_id: runId
@@ -126,7 +126,7 @@ export class WorkflowHandler {
     try {
       core.debug('Get workflow run id');
       const workflowId = await this.getWorkflowId();
-      const response = await this.octokit.actions.listWorkflowRuns({
+      const response = await this.octokit.rest.actions.listWorkflowRuns({
         owner: this.owner,
         repo: this.repo,
         workflow_id: workflowId,
@@ -168,9 +168,10 @@ export class WorkflowHandler {
       return this.workflowId;
     }
     try {
-      const workflowsResp = await this.octokit.actions.listRepoWorkflows({
+      const workflowsResp = await this.octokit.rest.actions.listRepoWorkflows({
         owner: this.owner, 
-        repo: this.repo
+        repo: this.repo,
+        per_page: 100 //max allowed
       });
       const workflows = workflowsResp.data.workflows;
       debug(`List Workflows`, workflows);

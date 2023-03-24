@@ -11,6 +11,7 @@ For details of the `workflow_dispatch` even see [this blog post introducing this
 
 *Note 2.* If you want to reference the target workflow by ID, you will need to list them with the following REST API call `curl https://api.github.com/repos/{{owner}}/{{repo}}/actions/workflows -H "Authorization: token {{pat-token}}"`
 
+_This action is a fork of `aurelian-baudet/workflow-dispatch` to add updates for GHA deprecations._
 _This action is a fork of `benc-uk/workflow-dispatch` to add support for waiting for workflow completion._
 
 ## Inputs
