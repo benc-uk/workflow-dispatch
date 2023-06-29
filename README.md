@@ -69,4 +69,5 @@ This Action emits a single output named `workflowId`.
     workflow: my-workflow.yaml
     repo: benc-uk/example
     inputs: '{ "message": "blah blah", "something": false }'
+    token: ${{ steps.generate_token.outputs.token }} # Required when using the `repo` option. Either a PAT or a token generated from a GitHub App (eg by https://github.com/tibdex/github-app-token)
 ```
