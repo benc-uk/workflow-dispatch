@@ -5,10 +5,11 @@
 // Workflow Dispatch Action - Main task code
 // ----------------------------------------------------------------------------
 
-import * as core from '@actions/core'
-import * as github from '@actions/github'
+import * as core from '@actions/core';
+import * as github from '@actions/github';
 import { formatDuration, getArgs, isTimedOut, sleep } from './utils';
 import { WorkflowHandler, WorkflowRunConclusion, WorkflowRunResult, WorkflowRunStatus } from './workflow-handler';
+import { handleWorkflowLogsPerJob } from './workflow-logs-handler';
 
 
 
@@ -20,7 +21,7 @@ async function getFollowUrl(workflowHandler: WorkflowHandler, interval: number, 
     try {
       const result = await workflowHandler.getWorkflowRunStatus();
       url = result.url;
-    } catch(e) {
+    } catch(e: any) {
       core.debug(`Failed to get workflow url: ${e.message}`);
     }
   } while (!url && !isTimedOut(start, timeout));
@@ -36,17 +37,17 @@ async function waitForCompletionOrTimeout(workflowHandler: WorkflowHandler, chec
     try {
       result = await workflowHandler.getWorkflowRunStatus();
       status = result.status;
-      core.debug(`Worflow is running for ${formatDuration(Date.now() - start)}. Current status=${status}`)
-    } catch(e) {
+      core.debug(`Worflow is running for ${formatDuration(Date.now() - start)}. Current status=${status}`);
+    } catch(e: any) {
       core.warning(`Failed to get workflow status: ${e.message}`);
     }
   } while (status !== WorkflowRunStatus.COMPLETED && !isTimedOut(start, waitForCompletionTimeout));
-  return { result, start }
+  return { result, start };
 }
 
 function computeConclusion(start: number, waitForCompletionTimeout: number, result?: WorkflowRunResult) {
   if (isTimedOut(start, waitForCompletionTimeout)) {
-    core.info(`Workflow wait timed out`);
+    core.info('Workflow wait timed out');
     core.setOutput('workflow-conclusion', WorkflowRunConclusion.TIMED_OUT);
     throw new Error('Workflow run has failed due to timeout');
   }
@@ -60,20 +61,29 @@ function computeConclusion(start: number, waitForCompletionTimeout: number, resu
   if (conclusion === WorkflowRunConclusion.TIMED_OUT) throw new Error('Workflow run has failed due to timeout');
 }
 
+async function handleLogs(args: any, workflowHandler: WorkflowHandler) {
+  try {
+    const workflowRunId = await workflowHandler.getWorkflowRunId();
+    await handleWorkflowLogsPerJob(args, workflowRunId);
+  } catch(e: any) {
+    core.error(`Failed to handle logs of tirggered workflow. Cause: ${e}`);
+  }
+}
+
 //
 // Main task function (async wrapper)
 //
 async function run(): Promise<void> {
   try {
     const args = getArgs();
-    const workflowHandler = new WorkflowHandler(args.token, args.workflowRef, args.owner, args.repo, args.ref);
+    const workflowHandler = new WorkflowHandler(args.token, args.workflowRef, args.owner, args.repo, args.ref, args.runName);
 
     // Trigger workflow run
     await workflowHandler.triggerWorkflow(args.inputs);
-    core.info(`Workflow triggered 🚀`);
+    core.info('Workflow triggered 🚀');
 
     if (args.displayWorkflowUrl) {
-      const url = await getFollowUrl(workflowHandler, args.displayWorkflowUrlInterval, args.displayWorkflowUrlTimeout)
+      const url = await getFollowUrl(workflowHandler, args.displayWorkflowUrlInterval, args.displayWorkflowUrlTimeout);
       core.info(`You can follow the running workflow here: ${url}`);
       core.setOutput('workflow-url', url);
     }
@@ -82,13 +92,15 @@ async function run(): Promise<void> {
       return;
     }
 
-    core.info(`Waiting for workflow completion`);
+    core.info('Waiting for workflow completion');
     const { result, start } = await waitForCompletionOrTimeout(workflowHandler, args.checkStatusInterval, args.waitForCompletionTimeout);
+
+    await handleLogs(args, workflowHandler);
 
     core.setOutput('workflow-url', result?.url);
     computeConclusion(start, args.waitForCompletionTimeout, result);
 
-  } catch (error) {
+  } catch (error: any) {
     core.setFailed(error.message);
   }
 }
@@ -96,4 +108,4 @@ async function run(): Promise<void> {
 //
 // Call the main task run function
 //
-run()
+run();

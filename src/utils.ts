@@ -1,5 +1,5 @@
-import * as core from '@actions/core'
-import * as github from '@actions/github'
+import * as core from '@actions/core';
+import * as github from '@actions/github';
 
 enum TimeUnit {
   S = 1000,
@@ -8,7 +8,7 @@ enum TimeUnit {
 }
 
 function toMilliseconds(timeWithUnit: string): number {
-  const unitStr = timeWithUnit.substr(timeWithUnit.length-1);
+  const unitStr = timeWithUnit.substring(timeWithUnit.length-1);
   const unit = TimeUnit[unitStr.toUpperCase() as keyof typeof TimeUnit];
   if (!unit) {
     throw new Error('Unknown time unit '+unitStr);
@@ -17,6 +17,16 @@ function toMilliseconds(timeWithUnit: string): number {
   return time * unit;
 }
 
+function parse(inputsJson: string) {
+  if(inputsJson) {
+    try {
+      return JSON.parse(inputsJson);
+    } catch(e) {
+      throw new Error(`Failed to parse 'inputs' parameter. Muse be a valid JSON.\nCause: ${e}`);
+    }
+  }
+  return {};
+}
 export function getArgs() {
   // Required inputs
   const token = core.getInput('token');
@@ -28,11 +38,7 @@ export function getArgs() {
     : [github.context.repo.owner, github.context.repo.repo];
 
   // Decode inputs, this MUST be a valid JSON string
-  let inputs = {};
-  const inputsJson = core.getInput('inputs');
-  if(inputsJson) {
-    inputs = JSON.parse(inputsJson);
-  }
+  const inputs = parse(core.getInput('inputs'));
 
   const displayWorkflowUrlStr = core.getInput('display-workflow-run-url');
   const displayWorkflowUrl = displayWorkflowUrlStr && displayWorkflowUrlStr === 'true';
@@ -43,6 +49,8 @@ export function getArgs() {
   const waitForCompletion = waitForCompletionStr && waitForCompletionStr === 'true';
   const waitForCompletionTimeout = toMilliseconds(core.getInput('wait-for-completion-timeout'));
   const checkStatusInterval = toMilliseconds(core.getInput('wait-for-completion-interval'));
+  const runName = core.getInput('run-name');
+  const workflowLogMode = core.getInput('workflow-logs');
 
   return {
     token,
@@ -56,7 +64,9 @@ export function getArgs() {
     displayWorkflowUrlInterval,
     checkStatusInterval,
     waitForCompletion,
-    waitForCompletionTimeout
+    waitForCompletionTimeout,
+    runName,
+    workflowLogMode
   };
 }
 
@@ -78,8 +88,8 @@ export function formatDuration(duration: number) {
   let minutesStr = minutes + '';
   let secondsStr = seconds + '';
 
-  if (hours   < 10) {hoursStr   = "0"+hoursStr;}
-  if (minutes < 10) {minutesStr = "0"+minutesStr;}
-  if (seconds < 10) {secondsStr = "0"+secondsStr;}
+  if (hours   < 10) {hoursStr   = '0'+hoursStr;}
+  if (minutes < 10) {minutesStr = '0'+minutesStr;}
+  if (seconds < 10) {secondsStr = '0'+secondsStr;}
   return hoursStr+'h '+minutesStr+'m '+secondsStr+'s';
 }

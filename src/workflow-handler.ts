@@ -1,6 +1,6 @@
 
-import * as core from '@actions/core'
-import * as github from '@actions/github'
+import * as core from '@actions/core';
+import * as github from '@actions/github';
 import { debug } from './debug';
 
 export enum WorkflowRunStatus {
@@ -15,7 +15,7 @@ const ofStatus = (status: string | null): WorkflowRunStatus => {
   }
   const key = status.toUpperCase() as keyof typeof WorkflowRunStatus;
   return WorkflowRunStatus[key];
-}
+};
 
 export enum WorkflowRunConclusion {
   SUCCESS = 'success',
@@ -33,13 +33,14 @@ const ofConclusion = (conclusion: string | null): WorkflowRunConclusion => {
   }
   const key = conclusion.toUpperCase() as keyof typeof WorkflowRunConclusion;
   return WorkflowRunConclusion[key];
-}
+};
 
 export interface WorkflowRunResult {
-  url: string, 
-  status: WorkflowRunStatus, 
+  url: string,
+  status: WorkflowRunStatus,
   conclusion: WorkflowRunConclusion
 }
+
 
 export class WorkflowHandler {
   private octokit: any;
@@ -48,18 +49,19 @@ export class WorkflowHandler {
   private triggerDate = 0;
 
   constructor(token: string,
-              private workflowRef: string,
-              private owner: string,
-              private repo: string,
-              private ref: string) {
+    private workflowRef: string,
+    private owner: string,
+    private repo: string,
+    private ref: string,
+    private runName: string) {
     // Get octokit client for making API calls
-    this.octokit = github.getOctokit(token)
+    this.octokit = github.getOctokit(token);
   }
 
   async triggerWorkflow(inputs: any) {
     try {
       const workflowId = await this.getWorkflowId();
-      this.triggerDate = Date.now();
+      this.triggerDate = new Date().setMilliseconds(0);
       const dispatchResp = await this.octokit.rest.actions.createWorkflowDispatch({
         owner: this.owner,
         repo: this.repo,
@@ -68,7 +70,7 @@ export class WorkflowHandler {
         inputs
       });
       debug('Workflow Dispatch', dispatchResp);
-    } catch (error) {
+    } catch (error: any) {
       debug('Workflow Dispatch error', error.message);
       throw error;
     }
@@ -90,7 +92,7 @@ export class WorkflowHandler {
         conclusion: ofConclusion(response.data.conclusion)
       };
 
-    } catch (error) {
+    } catch (error: any) {
       debug('Workflow Run status error', error);
       throw error;
     }
@@ -119,43 +121,70 @@ export class WorkflowHandler {
     }
   }
 
-  private async getWorkflowRunId(): Promise<number> {
+
+  async getWorkflowRunId(): Promise<number> {
     if (this.workflowRunId) {
       return this.workflowRunId;
     }
     try {
       core.debug('Get workflow run id');
-      const workflowId = await this.getWorkflowId();
-      const response = await this.octokit.rest.actions.listWorkflowRuns({
-        owner: this.owner,
-        repo: this.repo,
-        workflow_id: workflowId,
-        event: 'workflow_dispatch'
-      });
-      debug('List Workflow Runs', response);
-
-      const runs = response.data.workflow_runs
-        .filter((r: any) => new Date(r.created_at).setMilliseconds(0) >= this.triggerDate);
-      debug(`Filtered Workflow Runs (after trigger date: ${new Date(this.triggerDate).toISOString()})`, runs.map((r: any) => ({
-        id: r.id,
-        name: r.name,
-        created_at: r.creatd_at,
-        triggerDate: new Date(this.triggerDate).toISOString(),
-        created_at_ts: new Date(r.created_at).valueOf(),
-        triggerDateTs: this.triggerDate
-      })));
-  
-      if (runs.length == 0) {
-        throw new Error('Run not found');
+      if (this.runName) {
+        this.workflowRunId = await this.findWorklowRunIdFromRunName(this.runName);
+      } else {
+        this.workflowRunId = await this.findWorkflowRunIdFromFirstRunOfSameWorkflowId();
       }
 
-      this.workflowRunId = runs[0].id as number;
       return this.workflowRunId;
     } catch (error) {
       debug('Get workflow run id error', error);
       throw error;
     }
 
+  }
+
+  private async findWorkflowRunIdFromFirstRunOfSameWorkflowId(): Promise<number> {
+    const workflowId = await this.getWorkflowId();
+
+    const response = await this.octokit.rest.actions.listWorkflowRuns({
+      owner: this.owner,
+      repo: this.repo,
+      workflow_id: workflowId,
+      event: 'workflow_dispatch'
+    });
+
+    debug('List Workflow Runs', response);
+    const runs = response.data.workflow_runs
+      .filter((r: any) => new Date(r.created_at).setMilliseconds(0) >= this.triggerDate);
+    debug(`Filtered Workflow Runs (after trigger date: ${new Date(this.triggerDate).toISOString()})`, runs.map((r: any) => ({
+      id: r.id,
+      name: r.name,
+      created_at: r.created_at,
+      triggerDate: new Date(this.triggerDate).toISOString(),
+      created_at_ts: new Date(r.created_at).valueOf(),
+      triggerDateTs: this.triggerDate
+    })));
+
+    if (runs.length == 0) {
+      throw new Error('Run not found');
+    }
+
+    return runs[0].id as number;
+  }
+
+  private async findWorklowRunIdFromRunName(runName: string): Promise<number> {
+    const result = await this.octokit.rest.checks.listForRef({
+      check_name: runName,
+      owner: this.owner,
+      repo: this.repo,
+      ref: this.ref,
+      filter: 'latest'
+    });
+
+    if (result.length == 0) {
+      throw new Error('Run not found');
+    }
+
+    return result.check_runs[0].id as number;
   }
 
   private async getWorkflowId(): Promise<number | string> {
@@ -169,12 +198,11 @@ export class WorkflowHandler {
     }
     try {
       const workflowsResp = await this.octokit.rest.actions.listRepoWorkflows({
-        owner: this.owner, 
-        repo: this.repo,
-        per_page: 100 //max allowed
+        owner: this.owner,
+        repo: this.repo
       });
       const workflows = workflowsResp.data.workflows;
-      debug(`List Workflows`, workflows);
+      debug('List Workflows', workflows);
 
       // Locate workflow either by name or id
       const workflowFind = workflows.find((workflow: any) => workflow.name === this.workflowRef || workflow.id.toString() === this.workflowRef);
@@ -191,4 +219,5 @@ export class WorkflowHandler {
   private isFilename(workflowRef: string) {
     return /.+\.ya?ml$/.test(workflowRef);
   }
+
 }

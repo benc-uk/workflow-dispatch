@@ -1,0 +1,32 @@
+name: Retrieve logs
+
+on:
+  workflow_dispatch:
+
+jobs:
+  echo:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Echo message
+        run: |
+          for i in {1..500}
+          do
+            echo "Hello $i"
+            sleep 0.1
+          done
+
+  timeout:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Sleep
+        run: sleep 1200s
+
+  more-real-example:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+      - name: Some command with npx
+        run: |
+          npx create-react-app example-app

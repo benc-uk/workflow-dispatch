@@ -19,11 +19,13 @@ module.exports = {
     'no-trailing-spaces': 'error',
     'no-console': 'off',
 
-    '@typescript-eslint/semi': ['error', 'never'],
+    // '@typescript-eslint/semi': ['error', 'never'],
+    '@typescript-eslint/semi': ['error', 'always'],
     '@typescript-eslint/indent': ['error', 2],
     '@typescript-eslint/member-delimiter-style': 'off',
     '@typescript-eslint/no-explicit-any': 'warn',
-    '@typescript-eslint/no-unused-vars': ['error', { 'argsIgnorePattern': 'next|res|req' }],
+    // '@typescript-eslint/no-unused-vars': ['error', { 'argsIgnorePattern': 'next|res|req' }],
+    '@typescript-eslint/no-unused-vars': 'off',
 
     'func-call-spacing': 'off',
     '@typescript-eslint/func-call-spacing': 'error',

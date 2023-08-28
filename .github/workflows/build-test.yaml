@@ -31,45 +31,45 @@ jobs:
         path: dist
 
   echo-1-test:
-     needs: [build]
-     runs-on: ubuntu-latest
-     name: "echo-1-test [trigger|by workflow name]"
-     steps:
-     - name: Check out repository
-       uses: actions/checkout@v2
-     - name: Download dist
-       uses: actions/download-artifact@v2
-       with:
-         name: build
-         path: dist
-     - name: Invoke echo 1 workflow using this action (do not wait for completion)
-       uses: ./
-       with:
-         ref: ${{ github.event.pull_request.head.ref }}
-         workflow: Message Echo 1
-         token: ${{ secrets.BROADBOT_TOKEN }}
-         inputs: '{"message": "blah blah"}'
-         wait-for-completion: false
+    needs: [build]
+    runs-on: ubuntu-latest
+    name: "echo-1-test [trigger|by workflow name]"
+    steps:
+    - name: Check out repository
+      uses: actions/checkout@v3
+    - name: Download dist
+      uses: actions/download-artifact@v3
+      with:
+        name: build
+        path: dist
+    - name: Invoke echo 1 workflow using this action (do not wait for completion)
+      uses: ./
+      with:
+        ref: ${{ github.event.pull_request.head.ref }}
+        workflow: Message Echo 1
+        token: ${{ secrets.BROADBOT_TOKEN }}
+        inputs: '{"message": "blah blah"}'
+        wait-for-completion: false
  
   echo-2-test:
-     needs: [build]
-     runs-on: ubuntu-latest
-     name: "echo-2-test [trigger|by workflow filename]"
-     steps:
-     - name: Check out repository
-       uses: actions/checkout@v2
-     - name: Download dist
-       uses: actions/download-artifact@v2
-       with:
-         name: build
-         path: dist
-     - name: Invoke echo 2 workflow using this action
-       uses: ./
-       with:
-         ref: ${{ github.event.pull_request.head.ref }}
-         workflow: echo-02.yaml
-         token: ${{ secrets.BROADBOT_TOKEN }}
-         wait-for-completion: false
+    needs: [build]
+    runs-on: ubuntu-latest
+    name: "echo-2-test [trigger|by workflow filename]"
+    steps:
+    - name: Check out repository
+      uses: actions/checkout@v3
+    - name: Download dist
+      uses: actions/download-artifact@v3
+      with:
+        name: build
+        path: dist
+    - name: Invoke echo 2 workflow using this action
+      uses: ./
+      with:
+        ref: ${{ github.event.pull_request.head.ref }}
+        workflow: echo-02.yaml
+        token: ${{ secrets.BROADBOT_TOKEN }}
+        wait-for-completion: false
          
   long-running-test:
     needs: [build]
@@ -108,9 +108,9 @@ jobs:
     name: "failing-test [trigger+wait|by workflow filename|shoud report failure]"
     steps:
     - name: Check out repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
     - name: Download dist
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v3
       with:
         name: build
         path: dist
@@ -140,9 +140,9 @@ jobs:
     name: "timeout-test [trigger+wait|by workflow filename|shoud report timed_out]"
     steps:
     - name: Check out repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
     - name: Download dist
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v3
       with:
         name: build
         path: dist
@@ -164,3 +164,64 @@ jobs:
       with:
         expected: failure
         actual: ${{ steps.timeout-workflow.outcome }}
+
+  print-workflow-logs-test:
+    needs: [build]
+    runs-on: ubuntu-latest
+    name: "print-workflow-logs-test [trigger+wait|by workflow filename|print logs|shoud report timed_out]"
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+      - name: Download dist
+        uses: actions/download-artifact@v3
+        with:
+          name: build
+          path: dist
+      - name: Invoke 'retrieve-logs' workflow and wait for result using this action
+        id: print-workflow-logs
+        uses: ./
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          workflow: retrieve-logs.yml
+          token: ${{ secrets.BROADBOT_TOKEN }}
+          wait-for-completion-interval: 10s
+          wait-for-completion-timeout: 120s
+          workflow-logs: print
+        continue-on-error: true
+      - uses: nick-invision/assert-action@v1
+        with:
+          expected: timed_out
+          actual: ${{ steps.print-workflow-logs.outputs.workflow-conclusion }}
+      - uses: nick-invision/assert-action@v1
+        with:
+          expected: failure
+          actual: ${{ steps.print-workflow-logs.outcome }}
+        # TODO: add assertions on logs
+    # - name: Invoke external workflow using this action
+    #   uses: ./
+    #   with:
+    #     workflow: Deploy To Kubernetes
+    #     repo: benc-uk/dapr-store
+    #     token: ${{ secrets.BROADBOT_TOKEN }}
+    #     ref: master
+
+  workflow-dispatch-identification-test:
+    needs: [build]
+    strategy:
+      matrix:
+        iid: [ "1", "2", "3", "4", "5", "6", "7", "8", "9", "10" ]
+    runs-on: ubuntu-latest
+    name: "workflow-dispatch-identification-test [trigger|by workflow filename]"
+    steps:
+      - name: Invoke 'workflow-dispatch-identification' workflow and wait for result using this action
+        id: workflow-dispatch-identification
+        uses: ./
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          run-name: "workflow-dispatch-${{ matrix.iid }}"
+          workflow: workflow-dispatch-identification.yml
+          token: ${{ secrets.BROADBOT_TOKEN }}
+          inputs: '{
+            "iid": "${{ matrix.iid }}",
+            "run-name": "workflow-dispatch-${{ matrix.iid }}"
+          }'

@@ -1,0 +1,21 @@
+name: Workflow Dispatch Identification
+run-name: ${{ inputs.run-name }}
+on:
+  workflow_dispatch:
+    inputs:
+      iid:
+        description: 'An independent identifier of workflow dispatch'
+        required: true
+        # No default
+      run-name:
+        description: 'Run Name of workflow dispatch'
+        required: false
+        default: ''
+
+jobs:
+  workflow-dispatch-identificsation:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Echo iid
+        run: |
+          echo "IID: ${{ inputs.iid }}"
