@@ -1,27 +1,27 @@
-name: 'Workflow Dispatch'
-description: 'Trigger and chain GitHub Actions workflows with workflow_dispatch events'
+name: "Workflow Dispatch"
+description: "Trigger and chain GitHub Actions workflows with workflow_dispatch events"
 
 inputs:
   workflow:
-    description: 'Name, filename or ID of workflow to run'
+    description: "Name, filename or ID of workflow to run"
     required: true
   token:
-    description: 'GitHub token with repo write access, only required if the workflow is in a different repository'
+    description: "GitHub token with repo write access, only required if the workflow is in a different repository"
     required: false
     default: ${{ github.token }}
   inputs:
-    description: 'Inputs to pass to the workflow, must be a JSON string'
+    description: "Inputs to pass to the workflow, must be a JSON string"
     required: false
   ref:
-    description: 'The reference can be a branch, tag, or a commit SHA'
+    description: "The reference can be a branch, tag, or a commit SHA"
     required: false
   repo:
-    description: 'Repo owner & name, slash separated, only set if invoking a workflow in a different repo'
+    description: "Repo owner & name, slash separated, only set if invoking a workflow in a different repo"
     required: false
 
 runs:
-  using: 'node16'
-  main: 'dist/index.js'
+  using: "node20"
+  main: "dist/index.js"
 
 branding:
   color: purple

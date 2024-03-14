@@ -1,6 +1,6 @@
 {
   "name": "workflow-dispatch",
-  "version": "1.2.1",
+  "version": "1.2.3",
   "description": "Trigger running GitHub Actions workflows",
   "main": "dist/index.js",
   "scripts": {
@@ -15,11 +15,11 @@
   "license": "MIT",
   "devDependencies": {
     "@actions/core": "^1.10.0",
-    "@actions/github": "^5.1.1",
-    "@zeit/ncc": "^0.22.3",
-    "@typescript-eslint/eslint-plugin": "^5.41.0",
-    "@typescript-eslint/parser": "^5.41.0",
-    "eslint": "^8.26.0",
-    "typescript": "^4.8.4"
+    "@actions/github": "^6.0.0",
+    "@vercel/ncc": "^0.38.1",
+    "@typescript-eslint/eslint-plugin": "^7.2.0",
+    "@typescript-eslint/parser": "^7.2.0",
+    "eslint": "^8.57.0",
+    "typescript": "^5.4.2"
   }
 }
