@@ -5,8 +5,8 @@ on:
     branches: [master]
   workflow_dispatch:
 
-permissions:
-  contents: write
+# permissions:
+#   contents: write
 
 jobs:
   build:
@@ -37,16 +37,16 @@ jobs:
           workflow: "1854247"
           inputs: '{"message": "Mango jam"}'
 
-      - name: Push dist back to GitHub
-        uses: ad-m/github-push-action@master
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          branch: ${{ github.ref }}
+      # - name: Push dist back to GitHub
+      #   uses: ad-m/github-push-action@master
+      #   with:
+      #     github_token: ${{ secrets.GITHUB_TOKEN }}
+      #     branch: ${{ github.ref }}
 
-    # - name: Invoke external workflow using this action
-    #   uses: ./
-    #   with:
-    #     workflow: Deploy To Kubernetes
-    #     repo: benc-uk/dapr-store
-    #     token: ${{ secrets.PERSONAL_TOKEN }}
-    #     ref: master
+      # - name: Invoke external workflow using this action
+      #   uses: ./
+      #   with:
+      #     workflow: Deploy To Kubernetes
+      #     repo: benc-uk/dapr-store
+      #     token: ${{ secrets.PERSONAL_TOKEN }}
+      #     ref: master
