@@ -55,7 +55,8 @@ async function run(): Promise<void> {
     const foundWorkflow = workflows.find((workflow) => {
       return workflow.name === workflowRef ||
         workflow.id.toString() === workflowRef ||
-        workflow.path.endsWith(`/${workflowRef}`) // add a leading / to avoid matching workflow with same suffix
+        workflow.path.endsWith(`/${workflowRef}`) || // Add a leading / to avoid matching workflow with same suffix
+        workflow.path == workflowRef // Or it stays in top level directory
     })
 
     if(!foundWorkflow) throw new Error(`Unable to find workflow '${workflowRef}' in ${owner}/${repo} 😥`)
