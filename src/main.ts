@@ -34,7 +34,7 @@ async function run(): Promise<void> {
     // Decode inputs, this MUST be a valid JSON string
     let inputs = {}
     const inputsJson = core.getInput('inputs')
-    if(inputsJson) {
+    if (inputsJson) {
       inputs = JSON.parse(inputsJson)
     }
 
@@ -43,7 +43,12 @@ async function run(): Promise<void> {
 
     // List workflows via API, and handle paginated results
     const workflows: Workflow[] = await octokit.paginate(
-      octokit.rest.actions.listRepoWorkflows.endpoint.merge({ owner, repo, ref, inputs })
+      octokit.rest.actions.listRepoWorkflows.endpoint.merge({
+        owner,
+        repo,
+        ref,
+        inputs,
+      }),
     )
 
     // Debug response if ACTIONS_STEP_DEBUG is enabled
@@ -53,29 +58,34 @@ async function run(): Promise<void> {
 
     // Locate workflow either by name, id or filename
     const foundWorkflow = workflows.find((workflow) => {
-      return workflow.name === workflowRef ||
+      return (
+        workflow.name === workflowRef ||
         workflow.id.toString() === workflowRef ||
         workflow.path.endsWith(`/${workflowRef}`) || // Add a leading / to avoid matching workflow with same suffix
-        workflow.path == workflowRef // Or it stays in top level directory
+        workflow.path == workflowRef
+      ) // Or it stays in top level directory
     })
 
-    if(!foundWorkflow) throw new Error(`Unable to find workflow '${workflowRef}' in ${owner}/${repo} 😥`)
+    if (!foundWorkflow) throw new Error(`Unable to find workflow '${workflowRef}' in ${owner}/${repo} 😥`)
 
     console.log(`🔎 Found workflow, id: ${foundWorkflow.id}, name: ${foundWorkflow.name}, path: ${foundWorkflow.path}`)
 
     // Call workflow_dispatch API
     console.log('🚀 Calling GitHub API to dispatch workflow...')
-    const dispatchResp = await octokit.request(`POST /repos/${owner}/${repo}/actions/workflows/${foundWorkflow.id}/dispatches`, {
-      ref: ref,
-      inputs: inputs
-    })
+    const dispatchResp = await octokit.request(
+      `POST /repos/${owner}/${repo}/actions/workflows/${foundWorkflow.id}/dispatches`,
+      {
+        ref: ref,
+        inputs: inputs,
+      },
+    )
 
     core.info(`🏆 API response status: ${dispatchResp.status}`)
     core.setOutput('workflowId', foundWorkflow.id)
   } catch (error) {
     const e = error as Error
 
-    if(e.message.endsWith('a disabled workflow')){
+    if (e.message.endsWith('a disabled workflow')) {
       core.warning('Workflow is disabled, no action was taken')
       return
     }

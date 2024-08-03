@@ -29043,16 +29043,22 @@ function run() {
             // Get octokit client for making API calls
             const octokit = github.getOctokit(token);
             // List workflows via API, and handle paginated results
-            const workflows = yield octokit.paginate(octokit.rest.actions.listRepoWorkflows.endpoint.merge({ owner, repo, ref, inputs }));
+            const workflows = yield octokit.paginate(octokit.rest.actions.listRepoWorkflows.endpoint.merge({
+                owner,
+                repo,
+                ref,
+                inputs,
+            }));
             // Debug response if ACTIONS_STEP_DEBUG is enabled
             core.debug('### START List Workflows response data');
             core.debug(JSON.stringify(workflows, null, 3));
             core.debug('### END:  List Workflows response data');
             // Locate workflow either by name, id or filename
             const foundWorkflow = workflows.find((workflow) => {
-                return workflow.name === workflowRef ||
+                return (workflow.name === workflowRef ||
                     workflow.id.toString() === workflowRef ||
-                    workflow.path.endsWith(workflowRef);
+                    workflow.path.endsWith(`/${workflowRef}`) || // Add a leading / to avoid matching workflow with same suffix
+                    workflow.path == workflowRef); // Or it stays in top level directory
             });
             if (!foundWorkflow)
                 throw new Error(`Unable to find workflow '${workflowRef}' in ${owner}/${repo} 😥`);
@@ -29061,7 +29067,7 @@ function run() {
             console.log('🚀 Calling GitHub API to dispatch workflow...');
             const dispatchResp = yield octokit.request(`POST /repos/${owner}/${repo}/actions/workflows/${foundWorkflow.id}/dispatches`, {
                 ref: ref,
-                inputs: inputs
+                inputs: inputs,
             });
             core.info(`🏆 API response status: ${dispatchResp.status}`);
             core.setOutput('workflowId', foundWorkflow.id);
@@ -30937,7 +30943,7 @@ module.exports = parseParams
 /***/ ((module) => {
 
 "use strict";
-module.exports = JSON.parse('{"name":"workflow-dispatch","version":"1.2.1","description":"Trigger running GitHub Actions workflows","main":"dist/index.js","scripts":{"build":"ncc build src/main.ts -o dist","lint":"eslint src/"},"keywords":["github","actions"],"author":"Ben Coleman","license":"MIT","devDependencies":{"@actions/core":"^1.10.0","@actions/github":"^6.0.0","@vercel/ncc":"^0.38.1","@typescript-eslint/eslint-plugin":"^7.2.0","@typescript-eslint/parser":"^7.2.0","eslint":"^8.57.0","typescript":"^5.4.2"}}');
+module.exports = JSON.parse('{"name":"workflow-dispatch","version":"1.2.","description":"Trigger running GitHub Actions workflows","main":"dist/index.js","scripts":{"build":"ncc build src/main.ts -o dist","lint":"eslint src/","lint-fix":"eslint src/ --fix","format":"prettier --write src/"},"keywords":["github","actions"],"author":"Ben Coleman","license":"MIT","devDependencies":{"@actions/core":"^1.10.1","@actions/github":"^6.0.0","@vercel/ncc":"^0.38.1","typescript-eslint":"^8.0.0","eslint":"^9.8.0","typescript":"^5.5.4","prettier":"^3.3.3"}}');
 
 /***/ })
 
