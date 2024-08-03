@@ -30943,7 +30943,7 @@ module.exports = parseParams
 /***/ ((module) => {
 
 "use strict";
-module.exports = JSON.parse('{"name":"workflow-dispatch","version":"1.2.","description":"Trigger running GitHub Actions workflows","main":"dist/index.js","scripts":{"build":"ncc build src/main.ts -o dist","lint":"eslint src/","lint-fix":"eslint src/ --fix","format":"prettier --write src/"},"keywords":["github","actions"],"author":"Ben Coleman","license":"MIT","devDependencies":{"@actions/core":"^1.10.1","@actions/github":"^6.0.0","@vercel/ncc":"^0.38.1","typescript-eslint":"^8.0.0","eslint":"^9.8.0","typescript":"^5.5.4","prettier":"^3.3.3"}}');
+module.exports = JSON.parse('{"name":"workflow-dispatch","version":"1.2.4","description":"Trigger running GitHub Actions workflows","main":"dist/index.js","scripts":{"build":"ncc build src/main.ts -o dist","lint":"eslint src/","lint-fix":"eslint src/ --fix","format":"prettier --write src/"},"keywords":["github","actions"],"author":"Ben Coleman","license":"MIT","devDependencies":{"@actions/core":"^1.10.1","@actions/github":"^6.0.0","@vercel/ncc":"^0.38.1","typescript-eslint":"^8.0.0","eslint":"^9.8.0","typescript":"^5.5.4","prettier":"^3.3.3"}}');
 
 /***/ })
 
