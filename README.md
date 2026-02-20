@@ -50,9 +50,18 @@ workflow: 1218419
 
 This option is also left for backwards compatibility with older versions where this field was mandatory.
 
+### `wait-for-completion`
+
+**Optional.** Set to `'true'` to wait for the triggered workflow run to complete before finishing this action. The action will poll the run status every 5 seconds. Default is `false`.
+
 ## Action Outputs
 
-This Action emits a single output named `workflowId`.
+| Output | Description |
+|---|---|
+| `runId` | The ID of the workflow run that was triggered |
+| `runUrl` | The API URL of the workflow run that was triggered |
+| `runUrlHtml` | The HTML URL of the workflow run that was triggered |
+| `workflowId` | The ID of the workflow that was triggered |
 
 ## Example usage
 
