@@ -18,3 +18,4 @@ jobs:
         with:
           workflow: Message Echo 2
           inputs: '{"message": "mushrooms in the morning"}'
+          wait-for-completion: true

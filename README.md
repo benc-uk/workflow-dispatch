@@ -56,12 +56,12 @@ This option is also left for backwards compatibility with older versions where t
 
 ## Action Outputs
 
-| Output | Description |
-|---|---|
-| `runId` | The ID of the workflow run that was triggered |
-| `runUrl` | The API URL of the workflow run that was triggered |
+| Output       | Description                                         |
+| ------------ | --------------------------------------------------- |
+| `runId`      | The ID of the workflow run that was triggered       |
+| `runUrl`     | The API URL of the workflow run that was triggered  |
 | `runUrlHtml` | The HTML URL of the workflow run that was triggered |
-| `workflowId` | The ID of the workflow that was triggered |
+| `workflowId` | The ID of the workflow that was triggered           |
 
 ## Example usage
 
@@ -88,5 +88,5 @@ This option is also left for backwards compatibility with older versions where t
     repo: benc-uk/example
     inputs: '{ "message": "blah blah", "something": false }'
     # Required when using the `repo` option. Either a PAT or a token generated from the GitHub app or CLI
-    token: "${{ secrets.MY_TOKEN }}"
+    token: '${{ secrets.MY_TOKEN }}'
 ```
