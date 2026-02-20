@@ -23637,7 +23637,7 @@ async function run() {
       while (runStatus === "in_progress" || runStatus === "queued" || runStatus === "waiting") {
         if ((Date.now() - startTime) / 1e3 > timeoutSeconds) {
           warning(`\u26A0\uFE0F Workflow run did not complete within ${timeoutSeconds} seconds, timing out.
-Note: The workflow is still running but we are exiting this action to avoid blocking. You can check the run status here: ${dispatchResp.data.html_url}`);
+Note: The workflow is still running but we have stopped waiting. You can check the run status here: ${dispatchResp.data.html_url}`);
           break;
         }
         await new Promise((resolve) => setTimeout(resolve, 5e3));
