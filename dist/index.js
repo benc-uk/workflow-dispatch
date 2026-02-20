@@ -23628,6 +23628,24 @@ async function run() {
     );
     info(`\u{1F3C6} API response status: ${dispatchResp.status}`);
     info(`\u{1F310} Run URL: ${dispatchResp.data.html_url}`);
+    const waitForCompletion = getInput("wait-for-completion") === "true";
+    if (waitForCompletion) {
+      info("\u23F3 Waiting for workflow run to complete...");
+      let runStatus = "in_progress";
+      while (runStatus === "in_progress" || runStatus === "queued" || runStatus === "waiting") {
+        await new Promise((resolve) => setTimeout(resolve, 5e3));
+        const { data: runData } = await octokit.request(
+          `GET /repos/${owner}/${repo}/actions/runs/${dispatchResp.data.workflow_run_id}`
+        );
+        runStatus = runData.status;
+        info(`\u{1F504} Current run status: ${runStatus}`);
+      }
+      if (runStatus === "completed") {
+        info("\u2705 Workflow run completed successfully!");
+      } else {
+        warning(`\u26A0\uFE0F Workflow run completed with status: ${runStatus}`);
+      }
+    }
     setOutput("runId", dispatchResp.data.workflow_run_id);
     setOutput("runUrl", dispatchResp.data.run_url);
     setOutput("runUrlHtml", dispatchResp.data.html_url);

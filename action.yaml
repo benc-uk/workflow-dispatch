@@ -18,6 +18,10 @@ inputs:
   repo:
     description: 'Repo owner & name, slash separated, only set if invoking a workflow in a different repo'
     required: false
+  wait-for-completion:
+    description: 'Whether to wait for the workflow run to complete before finishing this action'
+    required: false
+    default: false
 
 outputs:
   runId:

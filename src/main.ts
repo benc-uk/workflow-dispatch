@@ -84,6 +84,28 @@ async function run(): Promise<void> {
     core.info(`🏆 API response status: ${dispatchResp.status}`)
     core.info(`🌐 Run URL: ${dispatchResp.data.html_url}`)
 
+    // Handle wait for completion
+    const waitForCompletion = core.getInput('wait-for-completion') === 'true'
+    if (waitForCompletion) {
+      core.info('⏳ Waiting for workflow run to complete...')
+      let runStatus = 'in_progress'
+      while (runStatus === 'in_progress' || runStatus === 'queued' || runStatus === 'waiting') {
+        await new Promise((resolve) => setTimeout(resolve, 5000)) // Wait for 5 seconds before polling again
+
+        const { data: runData } = await octokit.request(
+          `GET /repos/${owner}/${repo}/actions/runs/${dispatchResp.data.workflow_run_id}`,
+        )
+        runStatus = runData.status
+        core.info(`🔄 Current run status: ${runStatus}`)
+      }
+
+      if (runStatus === 'completed') {  
+        core.info('✅ Workflow run completed successfully!')
+      } else {
+        core.warning(`⚠️ Workflow run completed with status: ${runStatus}`)
+      }
+    }
+
     core.setOutput('runId', dispatchResp.data.workflow_run_id)
     core.setOutput('runUrl', dispatchResp.data.run_url)
     core.setOutput('runUrlHtml', dispatchResp.data.html_url)
