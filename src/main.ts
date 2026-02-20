@@ -1,5 +1,5 @@
 // ----------------------------------------------------------------------------
-// Copyright (c) Ben Coleman, 2020
+// Copyright (c) Ben Coleman, 2020-2026
 // Licensed under the MIT License.
 //
 // Workflow Dispatch Action - Main task code
@@ -77,10 +77,16 @@ async function run(): Promise<void> {
       {
         ref: ref,
         inputs: inputs,
+        return_run_details: true,
       },
     )
 
     core.info(`🏆 API response status: ${dispatchResp.status}`)
+    core.info(`🌐 Run URL: ${dispatchResp.data.html_url}`)
+
+    core.setOutput('runId', dispatchResp.data.workflow_run_id)
+    core.setOutput('runUrl', dispatchResp.data.run_url)
+    core.setOutput('runUrlHtml', dispatchResp.data.html_url)
     core.setOutput('workflowId', foundWorkflow.id)
   } catch (error) {
     const e = error as Error
