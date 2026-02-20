@@ -5,6 +5,8 @@ The workflow must be configured for this event type e.g. `on: [workflow_dispatch
 
 This allows you to chain workflows, the classic use case is have a CI build workflow, trigger a CD release/deploy workflow when it completes. Allowing you to maintain separate workflows for CI and CD, and pass data between them as required.
 
+**2026 Update**: We finally have a way to get the details of the triggered workflow run, including the run ID and URL, which means we can now poll for the run status and wait for it to complete if required. This is a common ask and I'm glad to have added this feature after nearly 6 years!
+
 For details of the `workflow_dispatch` even see [this blog post introducing this type of trigger](https://github.blog/changelog/2020-07-06-github-actions-manual-triggers-with-workflow_dispatch/)
 
 _Note 1._ GitHub now has a native way to chain workflows called "reusable workflows". See the docs on [reusing workflows](https://docs.github.com/en/actions/using-workflows/reusing-workflows). This approach is somewhat different from workflow_dispatch but it's worth keeping in mind.
@@ -54,6 +56,10 @@ This option is also left for backwards compatibility with older versions where t
 
 **Optional.** Set to `'true'` to wait for the triggered workflow run to complete before finishing this action. The action will poll the run status every 5 seconds. Default is `false`.
 
+### `wait-timeout-seconds`
+
+**Optional.** The maximum time in seconds to wait for the triggered workflow run to complete before timing out. This only applies if `wait-for-completion` is set to `true`. Default is `900` seconds (15 minutes).
+
 ## Action Outputs
 
 | Output       | Description                                         |
@@ -73,11 +79,12 @@ This option is also left for backwards compatibility with older versions where t
 ```
 
 ```yaml
-- name: Invoke workflow with inputs
+- name: Invoke workflow with inputs & wait
   uses: benc-uk/workflow-dispatch@v1
   with:
     workflow: Another Workflow
     inputs: '{ "message": "blah blah", "something": true }'
+    wait-for-completion: true
 ```
 
 ```yaml
