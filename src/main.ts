@@ -1,5 +1,5 @@
 // ----------------------------------------------------------------------------
-// Copyright (c) Ben Coleman, 2020
+// Copyright (c) Ben Coleman, 2020-2026
 // Licensed under the MIT License.
 //
 // Workflow Dispatch Action - Main task code
@@ -77,10 +77,45 @@ async function run(): Promise<void> {
       {
         ref: ref,
         inputs: inputs,
+        return_run_details: true,
       },
     )
 
     core.info(`🏆 API response status: ${dispatchResp.status}`)
+    core.info(`🌐 Run URL: ${dispatchResp.data.html_url}`)
+
+    // Handle wait for completion
+    const waitForCompletion = core.getInput('wait-for-completion') === 'true'
+    const timeoutSeconds = parseInt(core.getInput('wait-timeout-seconds') || '900', 10) // Default to 15 minutes
+    if (waitForCompletion) {
+      core.info(`⏳ Waiting for workflow run to complete with a timeout of ${timeoutSeconds} seconds...`)
+      let runStatus = 'in_progress'
+      const startTime = Date.now()
+      while (runStatus === 'in_progress' || runStatus === 'queued' || runStatus === 'waiting') {
+        if ((Date.now() - startTime) / 1000 > timeoutSeconds) {
+          core.warning(`⚠️ Workflow run did not complete within ${timeoutSeconds} seconds, timing out.\nNote: The workflow is still running but we have stopped waiting. You can check the run status here: ${dispatchResp.data.html_url}`)
+          break
+        }
+        
+        await new Promise((resolve) => setTimeout(resolve, 5000)) // Wait for 5 seconds before polling again
+
+        const { data: runData } = await octokit.request(
+          `GET /repos/${owner}/${repo}/actions/runs/${dispatchResp.data.workflow_run_id}`,
+        )
+        runStatus = runData.status
+        core.info(`🔄 Current run status: ${runStatus}`)
+      }
+
+      if (runStatus === 'completed') {  
+        core.info('✅ Workflow run completed successfully!')
+      } else {
+        core.warning(`⚠️ Workflow run completed with status: ${runStatus}`)
+      }
+    }
+
+    core.setOutput('runId', dispatchResp.data.workflow_run_id)
+    core.setOutput('runUrl', dispatchResp.data.run_url)
+    core.setOutput('runUrlHtml', dispatchResp.data.html_url)
     core.setOutput('workflowId', foundWorkflow.id)
   } catch (error) {
     const e = error as Error

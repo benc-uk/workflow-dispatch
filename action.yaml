@@ -1,27 +1,45 @@
-name: "Workflow Dispatch"
-description: "Trigger and chain GitHub Actions workflows with workflow_dispatch events"
+name: 'Workflow Dispatch'
+description: 'Trigger and chain GitHub Actions workflows with workflow_dispatch events'
 
 inputs:
   workflow:
-    description: "Name, filename or ID of workflow to run"
+    description: 'Name, filename or ID of workflow to run'
     required: true
   token:
-    description: "GitHub token with repo write access, only required if the workflow is in a different repository"
+    description: 'GitHub token with repo write access, only required if the workflow is in a different repository'
     required: false
     default: ${{ github.token }}
   inputs:
-    description: "Inputs to pass to the workflow, must be a JSON string"
+    description: 'Inputs to pass to the workflow, must be a JSON string'
     required: false
   ref:
-    description: "The reference can be a branch, tag, or a commit SHA"
+    description: 'The reference can be a branch, tag, or a commit SHA'
     required: false
   repo:
-    description: "Repo owner & name, slash separated, only set if invoking a workflow in a different repo"
+    description: 'Repo owner & name, slash separated, only set if invoking a workflow in a different repo'
     required: false
+  wait-for-completion:
+    description: 'Whether to wait for the workflow run to complete before finishing this action'
+    required: false
+    default: false
+  wait-timeout-seconds:
+    description: 'Maximum time in seconds to wait for the workflow run to complete before timing out (only applies if wait-for-completion is true)'
+    required: false
+    default: 900
+
+outputs:
+  runId:
+    description: 'The ID of the workflow run that was triggered'
+  runUrl:
+    description: 'The API URL of the workflow run that was triggered'
+  runUrlHtml:
+    description: 'The HTML URL of the workflow run that was triggered'
+  workflowId:
+    description: 'The ID of the workflow that was triggered'
 
 runs:
-  using: "node20"
-  main: "dist/index.js"
+  using: 'node24'
+  main: 'dist/index.js'
 
 branding:
   color: purple

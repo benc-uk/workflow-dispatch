@@ -1,16 +1,18 @@
 name: Message Echo 2
 
-on: 
+on:
   workflow_dispatch:
     inputs:
       message:
-        description: "Message to echo"
+        description: 'Message to echo'
         required: false
-        default: "this is echo 2"
+        default: 'this is echo 2'
 
 jobs:
   echo:
     runs-on: ubuntu-latest
     steps:
-      - name: Echo message
-        run: echo '${{ inputs.message }}'
+      - name: Echo message slowly with a wait
+        run: |
+          sleep 125        
+          echo '${{ inputs.message }}'
