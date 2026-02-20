@@ -7,6 +7,8 @@ This allows you to chain workflows, the classic use case is have a CI build work
 
 **2026 Update**: We finally have a way to get the details of the triggered workflow run, including the run ID and URL, which means we can now poll for the run status and wait for it to complete if required. This is a common ask and I'm glad to have added this feature after nearly 6 years!
 
+![Screenshot the logs of a workflow run](./etc/screen.png)
+
 For details of the `workflow_dispatch` even see [this blog post introducing this type of trigger](https://github.blog/changelog/2020-07-06-github-actions-manual-triggers-with-workflow_dispatch/)
 
 _Note 1._ GitHub now has a native way to chain workflows called "reusable workflows". See the docs on [reusing workflows](https://docs.github.com/en/actions/using-workflows/reusing-workflows). This approach is somewhat different from workflow_dispatch but it's worth keeping in mind.
