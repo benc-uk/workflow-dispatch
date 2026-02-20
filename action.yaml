@@ -22,6 +22,10 @@ inputs:
     description: 'Whether to wait for the workflow run to complete before finishing this action'
     required: false
     default: false
+  wait-timeout-seconds:
+    description: 'Maximum time in seconds to wait for the workflow run to complete before timing out (only applies if wait-for-completion is true)'
+    required: false
+    default: 900
 
 outputs:
   runId:

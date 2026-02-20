@@ -14,5 +14,5 @@ jobs:
     steps:
       - name: Echo message slowly with a wait
         run: |
-          sleep 25        
+          sleep 125        
           echo '${{ inputs.message }}'

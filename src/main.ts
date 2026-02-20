@@ -86,10 +86,17 @@ async function run(): Promise<void> {
 
     // Handle wait for completion
     const waitForCompletion = core.getInput('wait-for-completion') === 'true'
+    const timeoutSeconds = parseInt(core.getInput('wait-timeout-seconds') || '900', 10) // Default to 15 minutes
     if (waitForCompletion) {
       core.info('⏳ Waiting for workflow run to complete...')
       let runStatus = 'in_progress'
+      const startTime = Date.now()
       while (runStatus === 'in_progress' || runStatus === 'queued' || runStatus === 'waiting') {
+        if ((Date.now() - startTime) / 1000 > timeoutSeconds) {
+          core.warning(`⚠️ Workflow run did not complete within ${timeoutSeconds} seconds, timing out.`)
+          break
+        }
+        
         await new Promise((resolve) => setTimeout(resolve, 5000)) // Wait for 5 seconds before polling again
 
         const { data: runData } = await octokit.request(
