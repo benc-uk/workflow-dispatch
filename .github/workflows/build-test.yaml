@@ -36,14 +36,18 @@ jobs:
         with:
           workflow: Message Echo 1
           inputs: '{"message": "blah blah"}'
+          ref: ${{ github.event.pull_request.head.ref }}
 
       - name: Invoke echo 2 workflow using this action
         uses: ./
         with:
           workflow: echo-2.yaml
+          wait-for-completion: true
+          ref: ${{ github.event.pull_request.head.ref }}
 
       - name: Invoke echo 1 workflow by id
         uses: ./
         with:
           workflow: '1854247'
           inputs: '{"message": "Mango jam"}'
+          ref: ${{ github.event.pull_request.head.ref }}
