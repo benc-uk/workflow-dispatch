@@ -23603,9 +23603,7 @@ async function run() {
     const workflows = await octokit.paginate(
       octokit.rest.actions.listRepoWorkflows.endpoint.merge({
         owner,
-        repo,
-        ref,
-        inputs
+        repo
       })
     );
     debug("### START List Workflows response data");
@@ -23616,8 +23614,8 @@ async function run() {
       workflow.path == workflowRef;
     });
     if (!foundWorkflow) throw new Error(`Unable to find workflow '${workflowRef}' in ${owner}/${repo} \u{1F625}`);
-    console.log(`\u{1F50E} Found workflow, id: ${foundWorkflow.id}, name: ${foundWorkflow.name}, path: ${foundWorkflow.path}`);
-    console.log("\u{1F680} Calling GitHub API to dispatch workflow...");
+    info(`\u{1F50E} Found workflow, id: ${foundWorkflow.id}, name: ${foundWorkflow.name}, path: ${foundWorkflow.path}`);
+    info("\u{1F680} Calling GitHub API to dispatch workflow...");
     const dispatchResp = await octokit.request(
       `POST /repos/${owner}/${repo}/actions/workflows/${foundWorkflow.id}/dispatches`,
       {
@@ -23636,8 +23634,10 @@ async function run() {
       const startTime = Date.now();
       while (runStatus === "in_progress" || runStatus === "queued" || runStatus === "waiting") {
         if ((Date.now() - startTime) / 1e3 > timeoutSeconds) {
-          warning(`\u26A0\uFE0F Workflow run did not complete within ${timeoutSeconds} seconds, timing out.
-Note: The workflow is still running but we have stopped waiting. You can check the run status here: ${dispatchResp.data.html_url}`);
+          warning(
+            `\u26A0\uFE0F Workflow run did not complete within ${timeoutSeconds} seconds, timing out.
+Note: The workflow is still running but we have stopped waiting. You can check the run status here: ${dispatchResp.data.html_url}`
+          );
           break;
         }
         await new Promise((resolve) => setTimeout(resolve, 5e3));

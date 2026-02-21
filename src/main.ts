@@ -46,8 +46,6 @@ async function run(): Promise<void> {
       octokit.rest.actions.listRepoWorkflows.endpoint.merge({
         owner,
         repo,
-        ref,
-        inputs,
       }),
     )
 
@@ -68,10 +66,10 @@ async function run(): Promise<void> {
 
     if (!foundWorkflow) throw new Error(`Unable to find workflow '${workflowRef}' in ${owner}/${repo} 😥`)
 
-    console.log(`🔎 Found workflow, id: ${foundWorkflow.id}, name: ${foundWorkflow.name}, path: ${foundWorkflow.path}`)
+    core.info(`🔎 Found workflow, id: ${foundWorkflow.id}, name: ${foundWorkflow.name}, path: ${foundWorkflow.path}`)
 
     // Call workflow_dispatch API
-    console.log('🚀 Calling GitHub API to dispatch workflow...')
+    core.info('🚀 Calling GitHub API to dispatch workflow...')
     const dispatchResp = await octokit.request(
       `POST /repos/${owner}/${repo}/actions/workflows/${foundWorkflow.id}/dispatches`,
       {
