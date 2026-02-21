@@ -23675,7 +23675,7 @@ Note: The workflow is still running but we have stopped waiting. You can check t
       } else if (conclusion === "cancelled") {
         setFailed(`Workflow run was cancelled. Check the run details here: ${dispatchResp.data.html_url}`);
       } else {
-        info(`\u{1F389} Workflow run completed successfully with conclusion: ${conclusion}`);
+        info(`\u{1F389} Workflow conclusion: ${conclusion}`);
       }
     }
   } catch (error2) {

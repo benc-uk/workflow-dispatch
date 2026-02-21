@@ -142,7 +142,7 @@ async function run(): Promise<void> {
       } else if (conclusion === 'cancelled') {
         core.setFailed(`Workflow run was cancelled. Check the run details here: ${dispatchResp.data.html_url}`)
       } else {
-        core.info(`🎉 Workflow run completed successfully with conclusion: ${conclusion}`)
+        core.info(`🎉 Workflow conclusion: ${conclusion}`)
       }
     }
   } catch (error) {
