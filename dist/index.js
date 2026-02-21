@@ -23654,7 +23654,7 @@ Note: The workflow is still running but we have stopped waiting. You can check t
         info(`\u{1F504} Current run status: ${runStatus}`);
       }
       if (runStatus === "completed") {
-        info("\u2705 Workflow run completed successfully!");
+        info("\u2705 Workflow run completed, the final status can be found in the workflow run details.");
       } else if (runStatus === "timed_out") {
         warning(`\u26A0\uFE0F Workflow run did not complete within the timeout period.`);
       } else {
@@ -23666,8 +23666,17 @@ Note: The workflow is still running but we have stopped waiting. You can check t
     setOutput("runUrlHtml", dispatchResp.data.html_url);
     setOutput("workflowId", foundWorkflow.id);
     if (syncStatus && waitForCompletion) {
-      if (runStatus !== "completed") {
-        setFailed(`Workflow run did not complete successfully. Final status: ${runStatus}`);
+      const { data: finalRunData } = await octokit.request(
+        `GET /repos/${owner}/${repo}/actions/runs/${dispatchResp.data.workflow_run_id}`
+      );
+      const conclusion = finalRunData.conclusion;
+      info(`\u{1F50D} Final workflow run conclusion: ${conclusion}`);
+      if (conclusion === "failure") {
+        setFailed(`Workflow run failed. Check the run details here: ${dispatchResp.data.html_url}`);
+      } else if (conclusion === "cancelled") {
+        setFailed(`Workflow run was cancelled. Check the run details here: ${dispatchResp.data.html_url}`);
+      } else {
+        info(`\u{1F389} Workflow run completed successfully with conclusion: ${conclusion}`);
       }
     }
   } catch (error2) {

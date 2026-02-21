@@ -115,7 +115,7 @@ async function run(): Promise<void> {
       }
 
       if (runStatus === 'completed') {
-        core.info('✅ Workflow run completed successfully!')
+        core.info('✅ Workflow run completed, the final status can be found in the workflow run details.')
       } else if (runStatus === 'timed_out') {
         core.warning(`⚠️ Workflow run did not complete within the timeout period.`)
       } else {
@@ -130,8 +130,19 @@ async function run(): Promise<void> {
 
     // Fail this action if the triggered workflow run fails, or is cancelled, but only if we are waiting for completion
     if (syncStatus && waitForCompletion) {
-      if (runStatus !== 'completed') {
-        core.setFailed(`Workflow run did not complete successfully. Final status: ${runStatus}`)
+      // Get the final conclusion of the workflow run if we were waiting for completion
+      const { data: finalRunData } = await octokit.request(
+        `GET /repos/${owner}/${repo}/actions/runs/${dispatchResp.data.workflow_run_id}`,
+      )
+      const conclusion = finalRunData.conclusion
+      core.info(`🔍 Final workflow run conclusion: ${conclusion}`)
+
+      if (conclusion === 'failure') {
+        core.setFailed(`Workflow run failed. Check the run details here: ${dispatchResp.data.html_url}`)
+      } else if (conclusion === 'cancelled') {
+        core.setFailed(`Workflow run was cancelled. Check the run details here: ${dispatchResp.data.html_url}`)
+      } else {
+        core.info(`🎉 Workflow run completed successfully with conclusion: ${conclusion}`)
       }
     }
   } catch (error) {
