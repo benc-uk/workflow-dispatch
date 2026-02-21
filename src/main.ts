@@ -35,7 +35,11 @@ async function run(): Promise<void> {
     let inputs = {}
     const inputsJson = core.getInput('inputs')
     if (inputsJson) {
-      inputs = JSON.parse(inputsJson)
+      try {
+        inputs = JSON.parse(inputsJson)
+      } catch (e) {
+        core.error(`Failed to parse 'inputs' JSON string: ${e instanceof Error ? e.message : String(e)}`)
+      }
     }
 
     // Get octokit client for making API calls
@@ -94,6 +98,7 @@ async function run(): Promise<void> {
           core.warning(
             `⚠️ Workflow run did not complete within ${timeoutSeconds} seconds, timing out.\nNote: The workflow is still running but we have stopped waiting. You can check the run status here: ${dispatchResp.data.html_url}`,
           )
+          runStatus = 'timed_out'
           break
         }
 
@@ -108,6 +113,8 @@ async function run(): Promise<void> {
 
       if (runStatus === 'completed') {
         core.info('✅ Workflow run completed successfully!')
+      } else if (runStatus === 'timed_out') {
+        core.warning(`⚠️ Workflow run did not complete within the timeout period.`)
       } else {
         core.warning(`⚠️ Workflow run completed with status: ${runStatus}`)
       }
