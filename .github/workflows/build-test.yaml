@@ -31,14 +31,14 @@ jobs:
       - name: Build with esbuild
         run: npm run build
 
-      - name: Invoke echo 1 workflow using this action
+      - name: Invoke echo 1 workflow using name
         uses: ./
         with:
           workflow: Message Echo 1
-          inputs: '{"message": "blah blah"}'
+          inputs: '{"message": "blah blah", "dave": 123}'
           ref: ${{ github.event.pull_request.head.ref }}
 
-      - name: Invoke echo 2 workflow using this action
+      - name: Invoke echo 2 workflow using filename
         uses: ./
         with:
           workflow: echo-2.yaml
