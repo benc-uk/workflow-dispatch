@@ -135,8 +135,8 @@ async function run(): Promise<void> {
         `GET /repos/${owner}/${repo}/actions/runs/${dispatchResp.data.workflow_run_id}`,
       )
       const conclusion = finalRunData.conclusion
-      core.info(`🔍 Final workflow run conclusion: ${conclusion}`)
 
+      // Set this action to failed if the triggered workflow run failed or was cancelled
       if (conclusion === 'failure') {
         core.setFailed(`Workflow run failed. Check the run details here: ${dispatchResp.data.html_url}`)
       } else if (conclusion === 'cancelled') {

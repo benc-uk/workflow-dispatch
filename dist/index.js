@@ -23670,7 +23670,6 @@ Note: The workflow is still running but we have stopped waiting. You can check t
         `GET /repos/${owner}/${repo}/actions/runs/${dispatchResp.data.workflow_run_id}`
       );
       const conclusion = finalRunData.conclusion;
-      info(`\u{1F50D} Final workflow run conclusion: ${conclusion}`);
       if (conclusion === "failure") {
         setFailed(`Workflow run failed. Check the run details here: ${dispatchResp.data.html_url}`);
       } else if (conclusion === "cancelled") {
