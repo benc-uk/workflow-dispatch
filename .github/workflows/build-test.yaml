@@ -20,7 +20,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: 'lts/*'
+          node-version: '24.x'
 
       - name: Install dependencies
         run: npm ci
@@ -35,7 +35,7 @@ jobs:
         uses: ./
         with:
           workflow: Message Echo 1
-          inputs: '{"message": "blah blah", "dave": 123}'
+          inputs: '{"message": "blah blah"}'
           ref: ${{ github.event.pull_request.head.ref }}
 
       - name: Invoke echo 2 workflow using filename
