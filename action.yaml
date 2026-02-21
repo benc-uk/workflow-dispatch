@@ -27,7 +27,7 @@ inputs:
     required: false
     default: 900
   sync-status:
-    description: 'Whether to set the status of this workflow run to pending while waiting for the triggered workflow run to complete (only applies if wait-for-completion is true)'
+    description: 'Whether to set the status of this action to failed if the triggered workflow run fails, or is cancelled. Only applies if wait-for-completion is true.'
     required: false
     default: false
 

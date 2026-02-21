@@ -44,6 +44,7 @@ jobs:
           workflow: echo-2.yaml
           wait-for-completion: true
           ref: ${{ github.event.pull_request.head.ref || github.ref_name }}
+          sync-status: true
 
       - name: Invoke echo 1 workflow by id
         uses: ./
