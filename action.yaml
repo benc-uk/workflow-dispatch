@@ -15,6 +15,7 @@ inputs:
   ref:
     description: 'The reference can be a branch, tag, or a commit SHA'
     required: false
+    default: ${{ github.head_ref || github.ref }}
   repo:
     description: 'Repo owner & name, slash separated, only set if invoking a workflow in a different repo'
     required: false
