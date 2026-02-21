@@ -15,9 +15,9 @@ type Workflow = {
   path: string
 }
 
-//
+// =============================================================================
 // Main task function (async wrapper)
-//
+// =============================================================================
 async function run(): Promise<void> {
   core.info(`🏃 Workflow Dispatch Action v${PackageJSON.version}`)
   try {
@@ -88,10 +88,13 @@ async function run(): Promise<void> {
 
     // Handle wait for completion
     const waitForCompletion = core.getInput('wait-for-completion') === 'true'
+    const syncStatus = core.getInput('sync-status') === 'true'
     const timeoutSeconds = parseInt(core.getInput('wait-timeout-seconds') || '900', 10) // Default to 15 minutes
+    let runStatus = 'in_progress'
+
+    // Polling loop to check workflow run status until it completes or times out
     if (waitForCompletion) {
       core.info(`⏳ Waiting for workflow run to complete with a timeout of ${timeoutSeconds} seconds...`)
-      let runStatus = 'in_progress'
       const startTime = Date.now()
       while (runStatus === 'in_progress' || runStatus === 'queued' || runStatus === 'waiting') {
         if ((Date.now() - startTime) / 1000 > timeoutSeconds) {
@@ -124,6 +127,13 @@ async function run(): Promise<void> {
     core.setOutput('runUrl', dispatchResp.data.run_url)
     core.setOutput('runUrlHtml', dispatchResp.data.html_url)
     core.setOutput('workflowId', foundWorkflow.id)
+
+    // Fail this action if the triggered workflow run fails, or is cancelled, but only if we are waiting for completion
+    if (syncStatus && waitForCompletion) {
+      if (runStatus !== 'completed') {
+        core.setFailed(`Workflow run did not complete successfully. Final status: ${runStatus}`)
+      }
+    }
   } catch (error) {
     const e = error as Error
 
@@ -136,7 +146,7 @@ async function run(): Promise<void> {
   }
 }
 
-//
+// =============================================================================
 // Call the main task run function
-//
+// =============================================================================
 run()

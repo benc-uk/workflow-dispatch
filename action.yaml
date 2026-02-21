@@ -26,6 +26,10 @@ inputs:
     description: 'Maximum time in seconds to wait for the workflow run to complete before timing out (only applies if wait-for-completion is true)'
     required: false
     default: 900
+  sync-status:
+    description: 'Whether to set the status of this workflow run to pending while waiting for the triggered workflow run to complete (only applies if wait-for-completion is true)'
+    required: false
+    default: false
 
 outputs:
   runId:
