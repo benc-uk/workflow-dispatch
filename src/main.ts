@@ -128,7 +128,7 @@ async function run(): Promise<void> {
     core.setOutput('runUrlHtml', dispatchResp.data.html_url)
     core.setOutput('workflowId', foundWorkflow.id)
 
-    // Fail this action if the triggered workflow run fails, or is cancelled, but only if we are waiting for completion
+    // Sync the status of this action with the triggered workflow run if requested
     if (syncStatus && waitForCompletion) {
       // Get the final conclusion of the workflow run if we were waiting for completion
       const { data: finalRunData } = await octokit.request(

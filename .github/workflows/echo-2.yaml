@@ -12,7 +12,7 @@ jobs:
   echo:
     runs-on: ubuntu-latest
     steps:
-      - name: Echo message slowly with a wait
+      - name: Echo message with a wait
         run: |
           sleep 11
           echo '${{ inputs.message }}'
