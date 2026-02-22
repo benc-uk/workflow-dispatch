@@ -1,19 +1,16 @@
 name: Message Echo 3
 
-# A version using workflow_call for investigation purposes
-
-on: 
-  workflow_call:
+on:
+  workflow_dispatch:
     inputs:
       message:
         required: false
-        default: "this is echo 3"
-        type: string
-        description: "Message to echo"
+        default: 'this is echo 3'
+        description: 'Message to echo'
 
 jobs:
   echo:
     runs-on: ubuntu-latest
     steps:
-      - name: Echo message
-        run: echo '${{ inputs.message }}'
+      - name: Intentional failure
+        run: exit 1

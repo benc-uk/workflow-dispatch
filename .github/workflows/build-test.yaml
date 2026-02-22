@@ -1,49 +1,236 @@
-name: Build & Test
+name: 'CI: Lint, Build & Test'
 
 on:
   push:
     branches: [main]
+    paths:
+      - 'src/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'tsconfig.json'
+      - 'eslint.config.mjs'
+      - 'action.yaml'
+      - 'dist/**'
+      - '.github/workflows/**'
   pull_request:
     branches: [main]
+    paths:
+      - 'src/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'tsconfig.json'
+      - 'eslint.config.mjs'
+      - 'action.yaml'
+      - 'dist/**'
+      - '.github/workflows/**'
   workflow_dispatch:
 
-# permissions:
-#   contents: write
-
 jobs:
+  # ===========================================================================
+  # Build & lint — all test jobs depend on this
+  # ===========================================================================
   build:
+    name: Build & Lint
     runs-on: ubuntu-latest
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v6
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
-          node-version: 'lts/*'
+          node-version: '24.x'
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
 
-      - name: Install dependencies
-        run: npm ci
+  # ===========================================================================
+  # Test: Dispatch a workflow by its display name, with inputs
+  # ===========================================================================
+  test-dispatch-by-name:
+    name: 'Test: Dispatch by name'
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
 
-      - name: Run lint
-        run: npm run lint
-
-      - name: Build with esbuild
-        run: npm run build
-
-      - name: Invoke echo 1 workflow using this action
+      - name: Dispatch echo-1 by name
+        id: dispatch
         uses: ./
         with:
           workflow: Message Echo 1
-          inputs: '{"message": "blah blah"}'
+          inputs: '{"message": "hello from name test"}'
+          ref: ${{ github.event.pull_request.head.ref || github.ref_name }}
 
-      - name: Invoke echo 2 workflow using this action
+      - name: Assert outputs are set
+        env:
+          RUN_ID: ${{ steps.dispatch.outputs.runId }}
+          WORKFLOW_ID: ${{ steps.dispatch.outputs.workflowId }}
+          RUN_URL: ${{ steps.dispatch.outputs.runUrl }}
+          RUN_URL_HTML: ${{ steps.dispatch.outputs.runUrlHtml }}
+        run: |
+          echo "runId=$RUN_ID workflowId=$WORKFLOW_ID"
+          echo "runUrl=$RUN_URL"
+          echo "runUrlHtml=$RUN_URL_HTML"
+          [[ -n "$RUN_ID" ]]       || { echo "FAIL: runId empty";       exit 1; }
+          [[ -n "$WORKFLOW_ID" ]]  || { echo "FAIL: workflowId empty";  exit 1; }
+          [[ -n "$RUN_URL" ]]      || { echo "FAIL: runUrl empty";      exit 1; }
+          [[ -n "$RUN_URL_HTML" ]] || { echo "FAIL: runUrlHtml empty";  exit 1; }
+
+  # ===========================================================================
+  # Test: Dispatch a workflow by its filename (short form)
+  # ===========================================================================
+  test-dispatch-by-filename:
+    name: 'Test: Dispatch by filename'
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Dispatch echo-2 by filename
         uses: ./
         with:
           workflow: echo-2.yaml
+          ref: ${{ github.event.pull_request.head.ref || github.ref_name }}
 
-      - name: Invoke echo 1 workflow by id
+  # ===========================================================================
+  # Test: Dispatch a workflow by its full path
+  # ===========================================================================
+  test-dispatch-by-path:
+    name: 'Test: Dispatch by full path'
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Dispatch echo-2 by full path
+        uses: ./
+        with:
+          workflow: .github/workflows/echo-2.yaml
+          ref: ${{ github.event.pull_request.head.ref || github.ref_name }}
+
+  # ===========================================================================
+  # Test: Dispatch a workflow by its numeric ID
+  # ===========================================================================
+  test-dispatch-by-id:
+    name: 'Test: Dispatch by ID'
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      # NOTE: This ID is specific to this repo's echo-1 workflow.
+      # If the workflow file is deleted & recreated, this ID will change.
+      - name: Dispatch echo-1 by numeric ID
         uses: ./
         with:
           workflow: '1854247'
-          inputs: '{"message": "Mango jam"}'
+          inputs: '{"message": "dispatched by id"}'
+          ref: ${{ github.event.pull_request.head.ref || github.ref_name }}
+
+  # ===========================================================================
+  # Test: Wait for completion on a slow workflow (success case)
+  # ===========================================================================
+  test-wait-completion:
+    name: 'Test: Wait for completion'
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Dispatch echo-2 and wait for it to finish
+        uses: ./
+        with:
+          workflow: echo-2.yaml
+          wait-for-completion: true
+          ref: ${{ github.event.pull_request.head.ref || github.ref_name }}
+
+  # ===========================================================================
+  # Test: sync-status mirrors a successful workflow conclusion
+  # ===========================================================================
+  test-sync-status-success:
+    name: 'Test: Sync status (success)'
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Dispatch echo-1 with wait + sync-status
+        uses: ./
+        with:
+          workflow: Message Echo 1
+          inputs: '{"message": "sync status success test"}'
+          wait-for-completion: true
+          sync-status: true
+          ref: ${{ github.event.pull_request.head.ref || github.ref_name }}
+
+  # ===========================================================================
+  # Test: sync-status propagates a failing workflow as a failure
+  # ===========================================================================
+  test-sync-status-failure:
+    name: 'Test: Sync status (failure)'
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Dispatch echo-3 (always fails) with sync-status
+        id: dispatch-fail
+        continue-on-error: true
+        uses: ./
+        with:
+          workflow: echo-3.yaml
+          wait-for-completion: true
+          sync-status: true
+          ref: ${{ github.event.pull_request.head.ref || github.ref_name }}
+
+      - name: Assert action reported failure
+        run: |
+          if [[ "${{ steps.dispatch-fail.outcome }}" != "failure" ]]; then
+            echo "FAIL: Expected action to fail when sync-status mirrors a failing workflow"
+            exit 1
+          fi
+          echo "PASS: Action correctly propagated failure"
+
+  # ===========================================================================
+  # Test: Invalid workflow reference produces an error
+  # ===========================================================================
+  test-invalid-workflow:
+    name: 'Test: Invalid workflow name'
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Dispatch a workflow that does not exist
+        id: bad-workflow
+        continue-on-error: true
+        uses: ./
+        with:
+          workflow: this-workflow-does-not-exist.yaml
+          ref: ${{ github.event.pull_request.head.ref || github.ref_name }}
+
+      - name: Assert action failed
+        run: |
+          if [[ "${{ steps.bad-workflow.outcome }}" != "failure" ]]; then
+            echo "FAIL: Expected action to fail for non-existent workflow"
+            exit 1
+          fi
+          echo "PASS: Action correctly failed for invalid workflow reference"
+
+  # ===========================================================================
+  # Test: Wait timeout fires before a slow workflow finishes
+  # ===========================================================================
+  test-wait-timeout:
+    name: 'Test: Wait timeout'
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      # echo-2 sleeps for 11s — a 1-second timeout will trigger after the
+      # first poll cycle (~5s). The action warns but does NOT fail on timeout.
+      - name: Dispatch echo-2 with 1-second timeout
+        uses: ./
+        with:
+          workflow: echo-2.yaml
+          wait-for-completion: true
+          wait-timeout-seconds: 1
+          ref: ${{ github.event.pull_request.head.ref || github.ref_name }}

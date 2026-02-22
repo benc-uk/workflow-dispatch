@@ -15,9 +15,9 @@ type Workflow = {
   path: string
 }
 
-//
+// =============================================================================
 // Main task function (async wrapper)
-//
+// =============================================================================
 async function run(): Promise<void> {
   core.info(`🏃 Workflow Dispatch Action v${PackageJSON.version}`)
   try {
@@ -35,7 +35,11 @@ async function run(): Promise<void> {
     let inputs = {}
     const inputsJson = core.getInput('inputs')
     if (inputsJson) {
-      inputs = JSON.parse(inputsJson)
+      try {
+        inputs = JSON.parse(inputsJson)
+      } catch (e) {
+        core.error(`Failed to parse 'inputs' JSON string: ${e instanceof Error ? e.message : String(e)}`)
+      }
     }
 
     // Get octokit client for making API calls
@@ -46,8 +50,6 @@ async function run(): Promise<void> {
       octokit.rest.actions.listRepoWorkflows.endpoint.merge({
         owner,
         repo,
-        ref,
-        inputs,
       }),
     )
 
@@ -68,10 +70,10 @@ async function run(): Promise<void> {
 
     if (!foundWorkflow) throw new Error(`Unable to find workflow '${workflowRef}' in ${owner}/${repo} 😥`)
 
-    console.log(`🔎 Found workflow, id: ${foundWorkflow.id}, name: ${foundWorkflow.name}, path: ${foundWorkflow.path}`)
+    core.info(`🔎 Found workflow, id: ${foundWorkflow.id}, name: ${foundWorkflow.name}, path: ${foundWorkflow.path}`)
 
     // Call workflow_dispatch API
-    console.log('🚀 Calling GitHub API to dispatch workflow...')
+    core.info('🚀 Calling GitHub API to dispatch workflow...')
     const dispatchResp = await octokit.request(
       `POST /repos/${owner}/${repo}/actions/workflows/${foundWorkflow.id}/dispatches`,
       {
@@ -86,16 +88,20 @@ async function run(): Promise<void> {
 
     // Handle wait for completion
     const waitForCompletion = core.getInput('wait-for-completion') === 'true'
+    const syncStatus = core.getInput('sync-status') === 'true'
     const timeoutSeconds = parseInt(core.getInput('wait-timeout-seconds') || '900', 10) // Default to 15 minutes
+    let runStatus = 'in_progress'
+
+    // Polling loop to check workflow run status until it completes or times out
     if (waitForCompletion) {
       core.info(`⏳ Waiting for workflow run to complete with a timeout of ${timeoutSeconds} seconds...`)
-      let runStatus = 'in_progress'
       const startTime = Date.now()
       while (runStatus === 'in_progress' || runStatus === 'queued' || runStatus === 'waiting') {
         if ((Date.now() - startTime) / 1000 > timeoutSeconds) {
           core.warning(
             `⚠️ Workflow run did not complete within ${timeoutSeconds} seconds, timing out.\nNote: The workflow is still running but we have stopped waiting. You can check the run status here: ${dispatchResp.data.html_url}`,
           )
+          runStatus = 'timed_out'
           break
         }
 
@@ -109,7 +115,9 @@ async function run(): Promise<void> {
       }
 
       if (runStatus === 'completed') {
-        core.info('✅ Workflow run completed successfully!')
+        core.info('✅ Workflow run completed, the final status can be found in the workflow run details.')
+      } else if (runStatus === 'timed_out') {
+        core.warning(`⚠️ Workflow run did not complete within the timeout period.`)
       } else {
         core.warning(`⚠️ Workflow run completed with status: ${runStatus}`)
       }
@@ -119,6 +127,24 @@ async function run(): Promise<void> {
     core.setOutput('runUrl', dispatchResp.data.run_url)
     core.setOutput('runUrlHtml', dispatchResp.data.html_url)
     core.setOutput('workflowId', foundWorkflow.id)
+
+    // Sync the status of this action with the triggered workflow run if requested
+    if (syncStatus && waitForCompletion) {
+      // Get the final conclusion of the workflow run if we were waiting for completion
+      const { data: finalRunData } = await octokit.request(
+        `GET /repos/${owner}/${repo}/actions/runs/${dispatchResp.data.workflow_run_id}`,
+      )
+      const conclusion = finalRunData.conclusion
+
+      // Set this action to failed if the triggered workflow run failed or was cancelled
+      if (conclusion === 'failure') {
+        core.setFailed(`Workflow run failed. Check the run details here: ${dispatchResp.data.html_url}`)
+      } else if (conclusion === 'cancelled') {
+        core.setFailed(`Workflow run was cancelled. Check the run details here: ${dispatchResp.data.html_url}`)
+      } else {
+        core.info(`🎉 Workflow conclusion: ${conclusion}`)
+      }
+    }
   } catch (error) {
     const e = error as Error
 
@@ -131,7 +157,7 @@ async function run(): Promise<void> {
   }
 }
 
-//
+// =============================================================================
 // Call the main task run function
-//
+// =============================================================================
 run()

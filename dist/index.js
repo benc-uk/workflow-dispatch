@@ -23592,20 +23592,22 @@ async function run() {
   try {
     const workflowRef = getInput("workflow");
     const token = getInput("token");
-    const ref = getInput("ref") || context2.ref;
+    const ref = getInput("ref");
     const [owner, repo] = getInput("repo") ? getInput("repo").split("/") : [context2.repo.owner, context2.repo.repo];
     let inputs = {};
     const inputsJson = getInput("inputs");
     if (inputsJson) {
-      inputs = JSON.parse(inputsJson);
+      try {
+        inputs = JSON.parse(inputsJson);
+      } catch (e) {
+        error(`Failed to parse 'inputs' JSON string: ${e instanceof Error ? e.message : String(e)}`);
+      }
     }
     const octokit = getOctokit(token);
     const workflows = await octokit.paginate(
       octokit.rest.actions.listRepoWorkflows.endpoint.merge({
         owner,
-        repo,
-        ref,
-        inputs
+        repo
       })
     );
     debug("### START List Workflows response data");
@@ -23616,8 +23618,8 @@ async function run() {
       workflow.path == workflowRef;
     });
     if (!foundWorkflow) throw new Error(`Unable to find workflow '${workflowRef}' in ${owner}/${repo} \u{1F625}`);
-    console.log(`\u{1F50E} Found workflow, id: ${foundWorkflow.id}, name: ${foundWorkflow.name}, path: ${foundWorkflow.path}`);
-    console.log("\u{1F680} Calling GitHub API to dispatch workflow...");
+    info(`\u{1F50E} Found workflow, id: ${foundWorkflow.id}, name: ${foundWorkflow.name}, path: ${foundWorkflow.path}`);
+    info("\u{1F680} Calling GitHub API to dispatch workflow...");
     const dispatchResp = await octokit.request(
       `POST /repos/${owner}/${repo}/actions/workflows/${foundWorkflow.id}/dispatches`,
       {
@@ -23629,15 +23631,19 @@ async function run() {
     info(`\u{1F3C6} API response status: ${dispatchResp.status}`);
     info(`\u{1F310} Run URL: ${dispatchResp.data.html_url}`);
     const waitForCompletion = getInput("wait-for-completion") === "true";
+    const syncStatus = getInput("sync-status") === "true";
     const timeoutSeconds = parseInt(getInput("wait-timeout-seconds") || "900", 10);
+    let runStatus = "in_progress";
     if (waitForCompletion) {
       info(`\u23F3 Waiting for workflow run to complete with a timeout of ${timeoutSeconds} seconds...`);
-      let runStatus = "in_progress";
       const startTime = Date.now();
       while (runStatus === "in_progress" || runStatus === "queued" || runStatus === "waiting") {
         if ((Date.now() - startTime) / 1e3 > timeoutSeconds) {
-          warning(`\u26A0\uFE0F Workflow run did not complete within ${timeoutSeconds} seconds, timing out.
-Note: The workflow is still running but we have stopped waiting. You can check the run status here: ${dispatchResp.data.html_url}`);
+          warning(
+            `\u26A0\uFE0F Workflow run did not complete within ${timeoutSeconds} seconds, timing out.
+Note: The workflow is still running but we have stopped waiting. You can check the run status here: ${dispatchResp.data.html_url}`
+          );
+          runStatus = "timed_out";
           break;
         }
         await new Promise((resolve) => setTimeout(resolve, 5e3));
@@ -23648,7 +23654,9 @@ Note: The workflow is still running but we have stopped waiting. You can check t
         info(`\u{1F504} Current run status: ${runStatus}`);
       }
       if (runStatus === "completed") {
-        info("\u2705 Workflow run completed successfully!");
+        info("\u2705 Workflow run completed, the final status can be found in the workflow run details.");
+      } else if (runStatus === "timed_out") {
+        warning(`\u26A0\uFE0F Workflow run did not complete within the timeout period.`);
       } else {
         warning(`\u26A0\uFE0F Workflow run completed with status: ${runStatus}`);
       }
@@ -23657,6 +23665,19 @@ Note: The workflow is still running but we have stopped waiting. You can check t
     setOutput("runUrl", dispatchResp.data.run_url);
     setOutput("runUrlHtml", dispatchResp.data.html_url);
     setOutput("workflowId", foundWorkflow.id);
+    if (syncStatus && waitForCompletion) {
+      const { data: finalRunData } = await octokit.request(
+        `GET /repos/${owner}/${repo}/actions/runs/${dispatchResp.data.workflow_run_id}`
+      );
+      const conclusion = finalRunData.conclusion;
+      if (conclusion === "failure") {
+        setFailed(`Workflow run failed. Check the run details here: ${dispatchResp.data.html_url}`);
+      } else if (conclusion === "cancelled") {
+        setFailed(`Workflow run was cancelled. Check the run details here: ${dispatchResp.data.html_url}`);
+      } else {
+        info(`\u{1F389} Workflow conclusion: ${conclusion}`);
+      }
+    }
   } catch (error2) {
     const e = error2;
     if (e.message.endsWith("a disabled workflow")) {
