@@ -23592,7 +23592,7 @@ async function run() {
   try {
     const workflowRef = getInput("workflow");
     const token = getInput("token");
-    const ref = getInput("ref") || context2.ref;
+    const ref = getInput("ref");
     const [owner, repo] = getInput("repo") ? getInput("repo").split("/") : [context2.repo.owner, context2.repo.repo];
     let inputs = {};
     const inputsJson = getInput("inputs");
