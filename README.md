@@ -64,6 +64,10 @@ This option is also left for backwards compatibility with older versions where t
 
 **Optional.** The maximum time in seconds to wait for the triggered workflow run to complete before timing out. This only applies if `wait-for-completion` is set to `true`. Default is `900` seconds (15 minutes).
 
+### `sync-status`
+
+**Optional.** Set to `'true'` to sync the status of this action with the triggered workflow run. If the triggered workflow run fails or is cancelled, this action will also be set to failed. This only applies if `wait-for-completion` is set to `true`. Default is `false`.
+
 ## Action Outputs
 
 | Output       | Description                                         |
