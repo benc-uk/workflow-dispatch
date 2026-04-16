@@ -96,7 +96,7 @@ async function run(): Promise<void> {
     if (waitForCompletion) {
       core.info(`⏳ Waiting for workflow run to complete with a timeout of ${timeoutSeconds} seconds...`)
       const startTime = Date.now()
-      while (runStatus === 'in_progress' || runStatus === 'queued' || runStatus === 'waiting') {
+      while (runStatus === 'in_progress' || runStatus === 'queued' || runStatus === 'waiting' || runStatus === 'pending') {
         if ((Date.now() - startTime) / 1000 > timeoutSeconds) {
           core.warning(
             `⚠️ Workflow run did not complete within ${timeoutSeconds} seconds, timing out.\nNote: The workflow is still running but we have stopped waiting. You can check the run status here: ${dispatchResp.data.html_url}`,
