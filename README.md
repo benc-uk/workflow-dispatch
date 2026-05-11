@@ -58,7 +58,7 @@ This option is also left for backwards compatibility with older versions where t
 
 ### `wait-for-completion`
 
-**Optional.** Set to `'true'` to wait for the triggered workflow run to complete before finishing this action. The action will poll the run status every 5 seconds, but you can chnage this by setting `wait-interval-seconds`. Default is `false`.
+**Optional.** Set to `'true'` to wait for the triggered workflow run to complete before finishing this action. The action will poll the run status every 5 seconds, but you can change this by setting `wait-interval-seconds`. Default is `false`.
 
 ### `wait-timeout-seconds`
 
