@@ -23603,7 +23603,11 @@ async function run() {
         error(`Failed to parse 'inputs' JSON string: ${e instanceof Error ? e.message : String(e)}`);
       }
     }
-    const octokit = getOctokit(token);
+    const octokit = getOctokit(token, {
+      headers: {
+        "X-GitHub-Api-Version": "2022-11-28"
+      }
+    });
     const workflows = await octokit.paginate(
       octokit.rest.actions.listRepoWorkflows.endpoint.merge({
         owner,

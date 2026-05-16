@@ -42,8 +42,12 @@ async function run(): Promise<void> {
       }
     }
 
-    // Get octokit client for making API calls
-    const octokit = github.getOctokit(token)
+    // Get octokit client for making API calls, set the API version header to avoid deprecation warnings
+    const octokit = github.getOctokit(token, {
+      headers: {
+        'X-GitHub-Api-Version': '2022-11-28',
+      },
+    })
 
     // List workflows via API, and handle paginated results
     const workflows: Workflow[] = await octokit.paginate(
