@@ -23584,7 +23584,7 @@ function getOctokit(token, options, ...additionalPlugins) {
 }
 
 // package.json
-var version = "1.3.0";
+var version = "1.3.2";
 
 // src/main.ts
 var API_VERSION = "2026-03-10";

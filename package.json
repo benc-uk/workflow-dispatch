@@ -1,6 +1,6 @@
 {
   "name": "workflow-dispatch",
-  "version": "1.3.0",
+  "version": "1.3.2",
   "author": "Ben Coleman",
   "license": "MIT",
   "description": "Trigger running GitHub Actions workflows",
