@@ -44,8 +44,10 @@ async function run(): Promise<void> {
 
     // Get octokit client for making API calls, set the API version header to avoid deprecation warnings
     const octokit = github.getOctokit(token, {
-      headers: {
-        'X-GitHub-Api-Version': '2022-11-28',
+      request: {
+        headers: {
+          'X-GitHub-Api-Version': '2022-11-28',
+        },
       },
     })
 
