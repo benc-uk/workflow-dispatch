@@ -45,13 +45,7 @@ async function run(): Promise<void> {
     }
 
     // Get octokit client for making API calls
-    const octokit = github.getOctokit(token, {
-      request: {
-        headers: {
-          'X-GitHub-Api-Version': API_VERSION,
-        },
-      },
-    })
+    const octokit = github.getOctokit(token)
 
     // List workflows via API, and handle paginated results
     const workflows: Workflow[] = await octokit.paginate(
@@ -88,6 +82,7 @@ async function run(): Promise<void> {
         ref: ref,
         inputs: inputs,
         return_run_details: true,
+        headers: { 'x-github-api-version': API_VERSION },
       },
     )
 
@@ -118,6 +113,9 @@ async function run(): Promise<void> {
 
         const { data: runData } = await octokit.request(
           `GET /repos/${owner}/${repo}/actions/runs/${dispatchResp.data.workflow_run_id}`,
+          {
+            headers: { 'x-github-api-version': API_VERSION },
+          },
         )
         runStatus = runData.status
         core.info(`🔄 Current run status: ${runStatus}`)
