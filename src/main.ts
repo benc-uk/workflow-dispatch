@@ -9,6 +9,8 @@ import * as core from '@actions/core'
 import * as github from '@actions/github'
 import * as PackageJSON from '../package.json'
 
+const API_VERSION = '2026-03-10' // Latest API version as of March 2026, update as needed
+
 type Workflow = {
   id: number
   name: string
@@ -80,7 +82,7 @@ async function run(): Promise<void> {
         ref: ref,
         inputs: inputs,
         return_run_details: true,
-        headers: { 'x-github-api-version': '2026-03-10' },
+        headers: { 'x-github-api-version': API_VERSION },
       },
     )
 
@@ -111,6 +113,9 @@ async function run(): Promise<void> {
 
         const { data: runData } = await octokit.request(
           `GET /repos/${owner}/${repo}/actions/runs/${dispatchResp.data.workflow_run_id}`,
+          {
+            headers: { 'x-github-api-version': API_VERSION },
+          },
         )
         runStatus = runData.status
         core.info(`🔄 Current run status: ${runStatus}`)
@@ -135,6 +140,9 @@ async function run(): Promise<void> {
       // Get the final conclusion of the workflow run if we were waiting for completion
       const { data: finalRunData } = await octokit.request(
         `GET /repos/${owner}/${repo}/actions/runs/${dispatchResp.data.workflow_run_id}`,
+        {
+          headers: { 'x-github-api-version': API_VERSION },
+        },
       )
       const conclusion = finalRunData.conclusion
 
