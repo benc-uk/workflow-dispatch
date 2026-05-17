@@ -23625,7 +23625,8 @@ async function run() {
       {
         ref,
         inputs,
-        return_run_details: true
+        return_run_details: true,
+        headers: { "x-github-api-version": "2026-03-10" }
       }
     );
     info(`\u{1F3C6} API response status: ${dispatchResp.status}`);

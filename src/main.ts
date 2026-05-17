@@ -80,6 +80,7 @@ async function run(): Promise<void> {
         ref: ref,
         inputs: inputs,
         return_run_details: true,
+        headers: { 'x-github-api-version': '2026-03-10' },
       },
     )
 
