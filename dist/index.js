@@ -23604,7 +23604,13 @@ async function run() {
         error(`Failed to parse 'inputs' JSON string: ${e instanceof Error ? e.message : String(e)}`);
       }
     }
-    const octokit = getOctokit(token);
+    const octokit = getOctokit(token, {
+      request: {
+        headers: {
+          "X-GitHub-Api-Version": API_VERSION
+        }
+      }
+    });
     const workflows = await octokit.paginate(
       octokit.rest.actions.listRepoWorkflows.endpoint.merge({
         owner,
@@ -23626,8 +23632,7 @@ async function run() {
       {
         ref,
         inputs,
-        return_run_details: true,
-        headers: { "x-github-api-version": API_VERSION }
+        return_run_details: true
       }
     );
     info(`\u{1F3C6} API response status: ${dispatchResp.status}`);
@@ -23651,10 +23656,7 @@ Note: The workflow is still running but we have stopped waiting. You can check t
         }
         await new Promise((resolve) => setTimeout(resolve, waitIntervalSeconds * 1e3));
         const { data: runData } = await octokit.request(
-          `GET /repos/${owner}/${repo}/actions/runs/${dispatchResp.data.workflow_run_id}`,
-          {
-            headers: { "x-github-api-version": API_VERSION }
-          }
+          `GET /repos/${owner}/${repo}/actions/runs/${dispatchResp.data.workflow_run_id}`
         );
         runStatus = runData.status;
         info(`\u{1F504} Current run status: ${runStatus}`);
