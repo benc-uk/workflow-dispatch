@@ -72,6 +72,10 @@ This option is also left for backwards compatibility with older versions where t
 
 **Optional.** Set to `'true'` to sync the status of this action with the triggered workflow run. If the triggered workflow run fails or is cancelled, this action will also be set to failed. This only applies if `wait-for-completion` is set to `true`. Default is `false`.
 
+### `propagate-pending-wait`
+
+**Optional.** Set to `'true'` to handle the case where the triggered run is cancelled while still pending/queued, typically because a newer run in the same concurrency group superseded it. When enabled, the action looks for that newer run and continues waiting on it instead of treating the cancellation as final. This only applies if `wait-for-completion` is set to `true`. Default is `false`.
+
 ## Action Outputs
 
 | Output       | Description                                         |

@@ -35,6 +35,10 @@ inputs:
     description: 'Whether to set the status of this action to failed if the triggered workflow run fails, or is cancelled. Only applies if wait-for-completion is true.'
     required: false
     default: false
+  propagate-pending-wait:
+    description: 'If the triggered run is cancelled while pending/queued, look for a newer run in the same concurrency group that superseded it and continue waiting on that run instead. Only applies if wait-for-completion is true.'
+    required: false
+    default: false
 
 outputs:
   runId:

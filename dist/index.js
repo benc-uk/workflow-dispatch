@@ -23588,6 +23588,21 @@ var version = "1.3.2";
 
 // src/main.ts
 var API_VERSION = "2026-03-10";
+var ACTIVE_RUN_STATUSES = ["in_progress", "queued", "waiting", "pending"];
+async function findSupersedingRun(octokit, owner, repo, workflowId, cancelledRun) {
+  const { data } = await octokit.rest.actions.listWorkflowRuns({
+    owner,
+    repo,
+    workflow_id: workflowId,
+    branch: cancelledRun.head_branch,
+    per_page: 20,
+    headers: { "x-github-api-version": API_VERSION }
+  });
+  const candidates = data.workflow_runs.filter(
+    (candidateRun) => candidateRun.id !== cancelledRun.id && new Date(candidateRun.created_at).getTime() >= new Date(cancelledRun.created_at).getTime() && ACTIVE_RUN_STATUSES.includes(candidateRun.status ?? "")
+  ).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  return candidates[0];
+}
 async function run() {
   info(`\u{1F3C3} Workflow Dispatch Action v${version}`);
   try {
@@ -23634,30 +23649,43 @@ async function run() {
     info(`\u{1F310} Run URL: ${dispatchResp.data.html_url}`);
     const waitForCompletion = getInput("wait-for-completion") === "true";
     const syncStatus = getInput("sync-status") === "true";
+    const propagatePendingWait = getInput("propagate-pending-wait") === "true";
     const timeoutSeconds = parseInt(getInput("wait-timeout-seconds") || "900", 10);
     const waitIntervalSeconds = parseInt(getInput("wait-interval-seconds") || "5", 10);
     let runStatus = "in_progress";
+    let currentRunId = dispatchResp.data.workflow_run_id;
+    let currentRunUrl = dispatchResp.data.run_url;
+    let currentRunHtmlUrl = dispatchResp.data.html_url;
     if (waitForCompletion) {
       info(`\u23F3 Waiting for workflow run to complete with a timeout of ${timeoutSeconds} seconds...`);
       const startTime = Date.now();
-      while (runStatus === "in_progress" || runStatus === "queued" || runStatus === "waiting") {
+      while (ACTIVE_RUN_STATUSES.includes(runStatus)) {
         if ((Date.now() - startTime) / 1e3 > timeoutSeconds) {
           warning(
             `\u26A0\uFE0F Workflow run did not complete within ${timeoutSeconds} seconds, timing out.
-Note: The workflow is still running but we have stopped waiting. You can check the run status here: ${dispatchResp.data.html_url}`
+Note: The workflow is still running but we have stopped waiting. You can check the run status here: ${currentRunHtmlUrl}`
           );
           runStatus = "timed_out";
           break;
         }
         await new Promise((resolve) => setTimeout(resolve, waitIntervalSeconds * 1e3));
-        const { data: runData } = await octokit.request(
-          `GET /repos/${owner}/${repo}/actions/runs/${dispatchResp.data.workflow_run_id}`,
-          {
-            headers: { "x-github-api-version": API_VERSION }
-          }
-        );
+        const { data: runData } = await octokit.request(`GET /repos/${owner}/${repo}/actions/runs/${currentRunId}`, {
+          headers: { "x-github-api-version": API_VERSION }
+        });
         runStatus = runData.status;
         info(`\u{1F504} Current run status: ${runStatus}`);
+        if (propagatePendingWait && runStatus === "completed" && runData.conclusion === "cancelled") {
+          const supersedingRun = await findSupersedingRun(octokit, owner, repo, foundWorkflow.id, runData);
+          if (supersedingRun) {
+            warning(
+              `\u26A0\uFE0F Run ${currentRunId} was cancelled, likely superseded by run ${supersedingRun.id}. Switching to wait on the new run: ${supersedingRun.html_url}`
+            );
+            currentRunId = supersedingRun.id;
+            currentRunUrl = supersedingRun.url;
+            currentRunHtmlUrl = supersedingRun.html_url;
+            runStatus = supersedingRun.status ?? "queued";
+          }
+        }
       }
       if (runStatus === "completed") {
         info("\u2705 Workflow run completed, the final status can be found in the workflow run details.");
@@ -23667,22 +23695,19 @@ Note: The workflow is still running but we have stopped waiting. You can check t
         warning(`\u26A0\uFE0F Workflow run completed with status: ${runStatus}`);
       }
     }
-    setOutput("runId", dispatchResp.data.workflow_run_id);
-    setOutput("runUrl", dispatchResp.data.run_url);
-    setOutput("runUrlHtml", dispatchResp.data.html_url);
+    setOutput("runId", currentRunId);
+    setOutput("runUrl", currentRunUrl);
+    setOutput("runUrlHtml", currentRunHtmlUrl);
     setOutput("workflowId", foundWorkflow.id);
     if (syncStatus && waitForCompletion) {
-      const { data: finalRunData } = await octokit.request(
-        `GET /repos/${owner}/${repo}/actions/runs/${dispatchResp.data.workflow_run_id}`,
-        {
-          headers: { "x-github-api-version": API_VERSION }
-        }
-      );
+      const { data: finalRunData } = await octokit.request(`GET /repos/${owner}/${repo}/actions/runs/${currentRunId}`, {
+        headers: { "x-github-api-version": API_VERSION }
+      });
       const conclusion = finalRunData.conclusion;
       if (conclusion === "failure") {
-        setFailed(`Workflow run failed. Check the run details here: ${dispatchResp.data.html_url}`);
+        setFailed(`Workflow run failed. Check the run details here: ${currentRunHtmlUrl}`);
       } else if (conclusion === "cancelled") {
-        setFailed(`Workflow run was cancelled. Check the run details here: ${dispatchResp.data.html_url}`);
+        setFailed(`Workflow run was cancelled. Check the run details here: ${currentRunHtmlUrl}`);
       } else {
         info(`\u{1F389} Workflow conclusion: ${conclusion}`);
       }
