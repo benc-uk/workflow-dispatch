@@ -121,7 +121,8 @@ jobs:
       - name: Dispatch echo-1 by numeric ID
         uses: ./
         with:
-          workflow: '1854247'
+          # Hardcoded ID for echo-2.yaml
+          workflow: '312931751'
           inputs: '{"message": "dispatched by id"}'
           ref: ${{ github.event.pull_request.head.ref || github.ref_name }}
 

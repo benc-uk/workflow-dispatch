@@ -8,6 +8,7 @@
   "scripts": {
     "build": "esbuild src/main.ts --bundle --platform=node --target=node24 --outfile=dist/index.js",
     "lint": "eslint src/ --ext .ts && prettier --check src/",
+    "lint-write": "eslint src/ --ext .ts && prettier --write src/",
     "lint-fix": "eslint src/ --fix",
     "format": "prettier --write src/"
   },
