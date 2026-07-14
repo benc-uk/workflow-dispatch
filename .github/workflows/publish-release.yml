@@ -1,0 +1,61 @@
+name: "Publish Release"
+run-name: Publish Release [${{ inputs.release_name }}] by @${{ github.actor }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_name:
+        type: string
+        description: release name (ie v1, v1.5, v2)
+        required: true
+      new_release_description:
+        type: string
+        description: release description (ie 'Adding new input migration-command')
+        required: false
+        default: ''
+
+jobs:
+  publish_release:
+    name: "publish release"
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      RELEASE_TOKEN: ${{ secrets.GH_TOKEN || github.token }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Tag and create or update GitHub Release
+        env:
+          GH_TOKEN: ${{ env.RELEASE_TOKEN }}
+          RELEASE_NAME: ${{ inputs.release_name }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${{ inputs.new_release_description }}" ]; then
+            DESCRIPTION_STR="release ${{ inputs.release_name }}"
+          else
+            DESCRIPTION_STR="${{ inputs.new_release_description }}"
+          fi
+
+          git config --local user.email "gh-automation@abovelending.com"
+          git config --local user.name "$GITHUB_ACTOR"
+
+          git tag -a -f -m "${DESCRIPTION_STR}" "${RELEASE_NAME}"
+          git push -f --tags
+
+          if gh release view "${RELEASE_NAME}" &>/dev/null; then
+            gh api "repos/${GITHUB_REPOSITORY}/releases/generate-notes" \
+              --method POST \
+              -f "tag_name=${RELEASE_NAME}" \
+              -f "target_commitish=${GITHUB_SHA}" \
+              --jq .body \
+              | gh release edit "${RELEASE_NAME}" \
+                  --title "${RELEASE_NAME}" \
+                  --notes-file -
+          else
+            gh release create "${RELEASE_NAME}" \
+              --title "${RELEASE_NAME}" \
+              --generate-notes \
+              --verify-tag
+          fi
