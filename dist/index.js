@@ -23601,7 +23601,9 @@ async function run() {
       try {
         inputs = JSON.parse(inputsJson);
       } catch (e) {
-        error(`Failed to parse 'inputs' JSON string: ${e instanceof Error ? e.message : String(e)}`);
+        throw new Error(`Failed to parse 'inputs' JSON string: ${e instanceof Error ? e.message : String(e)}`, {
+          cause: e
+        });
       }
     }
     const octokit = getOctokit(token);
