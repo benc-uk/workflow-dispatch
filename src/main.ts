@@ -8,6 +8,8 @@
 import * as core from '@actions/core'
 import * as github from '@actions/github'
 import * as PackageJSON from '../package.json'
+import { createOctokit, NO_RETRY_REQUEST_OPTIONS } from './octokit-client.ts'
+import { TIMED_OUT, waitForRunCompletion } from './wait-for-run.ts'
 
 const API_VERSION = '2026-03-10' // Latest API version as of March 2026, update as needed
 
@@ -46,8 +48,8 @@ async function run(): Promise<void> {
       }
     }
 
-    // Get octokit client for making API calls
-    const octokit = github.getOctokit(token)
+    // Get octokit client for making API calls (with retry + throttling plugins)
+    const octokit = createOctokit(token)
 
     // List workflows via API, and handle paginated results
     const workflows: Workflow[] = await octokit.paginate(
@@ -76,7 +78,7 @@ async function run(): Promise<void> {
 
     core.info(`🔎 Found workflow, id: ${foundWorkflow.id}, name: ${foundWorkflow.name}, path: ${foundWorkflow.path}`)
 
-    // Call workflow_dispatch API
+    // Call workflow_dispatch API, never retried on server errors as that could trigger a duplicate run
     core.info('🚀 Calling GitHub API to dispatch workflow...')
     const dispatchResp = await octokit.request(
       `POST /repos/${owner}/${repo}/actions/workflows/${foundWorkflow.id}/dispatches`,
@@ -85,6 +87,7 @@ async function run(): Promise<void> {
         inputs: inputs,
         return_run_details: true,
         headers: { 'x-github-api-version': API_VERSION },
+        request: NO_RETRY_REQUEST_OPTIONS,
       },
     )
 
@@ -96,41 +99,30 @@ async function run(): Promise<void> {
     const syncStatus = core.getInput('sync-status') === 'true'
     const timeoutSeconds = parseInt(core.getInput('wait-timeout-seconds') || '900', 10) // Default to 15 minutes
     const waitIntervalSeconds = parseInt(core.getInput('wait-interval-seconds') || '5', 10) // Default to 5 seconds
-    let runStatus = 'in_progress'
 
-    // Polling loop to check workflow run status until it completes or times out
+    // Poll the workflow run status until it completes or times out
     if (waitForCompletion) {
       core.info(`⏳ Waiting for workflow run to complete with a timeout of ${timeoutSeconds} seconds...`)
-      const startTime = Date.now()
-      while (
-        runStatus === 'in_progress' ||
-        runStatus === 'queued' ||
-        runStatus === 'waiting' ||
-        runStatus === 'pending'
-      ) {
-        if ((Date.now() - startTime) / 1000 > timeoutSeconds) {
-          core.warning(
-            `⚠️ Workflow run did not complete within ${timeoutSeconds} seconds, timing out.\nNote: The workflow is still running but we have stopped waiting. You can check the run status here: ${dispatchResp.data.html_url}`,
+      const runStatus = await waitForRunCompletion({
+        getStatus: async () => {
+          const { data: runData } = await octokit.request(
+            `GET /repos/${owner}/${repo}/actions/runs/${dispatchResp.data.workflow_run_id}`,
+            {
+              headers: { 'x-github-api-version': API_VERSION },
+            },
           )
-          runStatus = 'timed_out'
-          break
-        }
-
-        await new Promise((resolve) => setTimeout(resolve, waitIntervalSeconds * 1000)) // Wait for waitIntervalSeconds before polling again
-
-        const { data: runData } = await octokit.request(
-          `GET /repos/${owner}/${repo}/actions/runs/${dispatchResp.data.workflow_run_id}`,
-          {
-            headers: { 'x-github-api-version': API_VERSION },
-          },
-        )
-        runStatus = runData.status
-        core.info(`🔄 Current run status: ${runStatus}`)
-      }
+          return runData.status
+        },
+        timeoutSeconds,
+        intervalSeconds: waitIntervalSeconds,
+      })
 
       if (runStatus === 'completed') {
         core.info('✅ Workflow run completed, the final status can be found in the workflow run details.')
-      } else if (runStatus === 'timed_out') {
+      } else if (runStatus === TIMED_OUT) {
+        core.warning(
+          `⚠️ Workflow run did not complete within ${timeoutSeconds} seconds, timing out.\nNote: The workflow is still running but we have stopped waiting. You can check the run status here: ${dispatchResp.data.html_url}`,
+        )
         core.warning(`⚠️ Workflow run did not complete within the timeout period.`)
       } else {
         core.warning(`⚠️ Workflow run completed with status: ${runStatus}`)
