@@ -7,6 +7,8 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "esbuild src/main.ts --bundle --platform=node --target=node24 --outfile=dist/index.js",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test \"src/**/*.test.ts\"",
     "lint": "eslint src/ --ext .ts && prettier --check src/",
     "lint-fix": "eslint src/ --fix && prettier --write src/",
     "format": "prettier --write src/"
@@ -15,10 +17,15 @@
     "github",
     "actions"
   ],
+  "dependencies": {
+    "@actions/core": "^3.0.1",
+    "@actions/github": "^9.1.1",
+    "@octokit/plugin-retry": "^8.1.1",
+    "@octokit/plugin-throttling": "^11.0.5"
+  },
   "devDependencies": {
-    "@actions/core": "^3.0.0",
-    "@actions/github": "^9.0.0",
     "@eslint/js": "^10.0.1",
+    "@types/node": "^24.19.2",
     "esbuild": "^0.25.0",
     "eslint": "^10.0.1",
     "prettier": "^3.8.1",
