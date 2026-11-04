@@ -23590,6 +23590,7 @@ var version = "1.3.3";
 var API_VERSION = "2026-03-10";
 async function run() {
   info(`\u{1F3C3} Workflow Dispatch Action v${version}`);
+  let dispatchReqInFlightTo;
   try {
     const workflowRef = getInput("workflow");
     const token = getInput("token");
@@ -23601,7 +23602,7 @@ async function run() {
       try {
         inputs = JSON.parse(inputsJson);
       } catch (e) {
-        throw new Error(`Failed to parse 'inputs' JSON string: ${e instanceof Error ? e.message : String(e)}`, {
+        throw new Error(`\u{1F92F} Failed to parse 'inputs' JSON string: ${e instanceof Error ? e.message : String(e)}`, {
           cause: e
         });
       }
@@ -23620,9 +23621,10 @@ async function run() {
       return workflow.name === workflowRef || workflow.id.toString() === workflowRef || workflow.path.endsWith(`/${workflowRef}`) || // Add a leading / to avoid matching workflow with same suffix
       workflow.path == workflowRef;
     });
-    if (!foundWorkflow) throw new Error(`Unable to find workflow '${workflowRef}' in ${owner}/${repo} \u{1F625}`);
+    if (!foundWorkflow) throw new Error(`\u{1F625} Unable to find workflow '${workflowRef}' in ${owner}/${repo}`);
     info(`\u{1F50E} Found workflow, id: ${foundWorkflow.id}, name: ${foundWorkflow.name}, path: ${foundWorkflow.path}`);
     info("\u{1F680} Calling GitHub API to dispatch workflow...");
+    dispatchReqInFlightTo = `'${foundWorkflow.path}' (id: ${foundWorkflow.id}) in '${owner}/${repo}' on ref '${ref}'`;
     const dispatchResp = await octokit.request(
       `POST /repos/${owner}/${repo}/actions/workflows/${foundWorkflow.id}/dispatches`,
       {
@@ -23632,6 +23634,7 @@ async function run() {
         headers: { "x-github-api-version": API_VERSION }
       }
     );
+    dispatchReqInFlightTo = void 0;
     info(`\u{1F3C6} API response status: ${dispatchResp.status}`);
     info(`\u{1F310} Run URL: ${dispatchResp.data.html_url}`);
     const waitForCompletion = getInput("wait-for-completion") === "true";
@@ -23682,20 +23685,40 @@ Note: The workflow is still running but we have stopped waiting. You can check t
       );
       const conclusion = finalRunData.conclusion;
       if (conclusion === "failure") {
-        setFailed(`Workflow run failed. Check the run details here: ${dispatchResp.data.html_url}`);
+        setFailed(`\u{1F92F} Workflow run failed. Check the run details here: ${dispatchResp.data.html_url}`);
       } else if (conclusion === "cancelled") {
-        setFailed(`Workflow run was cancelled. Check the run details here: ${dispatchResp.data.html_url}`);
+        setFailed(`\u{1F5D1}\uFE0F Workflow run was cancelled. Check the run details here: ${dispatchResp.data.html_url}`);
       } else {
         info(`\u{1F389} Workflow conclusion: ${conclusion}`);
       }
     }
   } catch (error2) {
-    const e = error2;
-    if (e.message.endsWith("a disabled workflow")) {
-      warning("Workflow is disabled, no action was taken");
+    const e = error2 ?? {};
+    const message = (typeof error2 === "string" ? error2 : typeof e.message === "string" ? e.message : "").trim();
+    if (message.endsWith("a disabled workflow")) {
+      warning("\u{1F6AB} Workflow is disabled, no action was taken");
       return;
     }
-    setFailed(e.message);
+    const oneLine = message.replace(/\s+/g, " ");
+    const detail = oneLine.length > 512 ? `${oneLine.slice(0, 512)}\u2026` : oneLine;
+    const status = typeof e.status === "number" && e.status > 0 ? e.status : void 0;
+    let err;
+    if (status === void 0) {
+      err = detail || (error2 instanceof Error ? `\u274C ${error2.name} without a message` : "\u2049\uFE0F Unknown error (no error message)");
+    } else {
+      err = status === 500 && !e.response ? "\u{1F4E1} Network error (no response)" : `\u{1F6A8} HTTP ${status}`;
+      if (typeof e.request?.method === "string" && typeof e.request?.url === "string") {
+        err += ` from '${e.request.method} ${e.request.url}'`;
+      }
+      err += `: ${detail || "(response body remained empty)"}`;
+    }
+    if (dispatchReqInFlightTo) {
+      err = `\u{1F4A5} Failed to dispatch workflow ${dispatchReqInFlightTo}: ${err}`;
+      if (status === void 0 || status >= 500) {
+        err += ".\nThis was a server or network error, so GitHub may still have created the workflow run.\nCheck the run history of the workflow before dispatching again!";
+      }
+    }
+    setFailed(err);
   }
 }
 run();
